@@ -1,6 +1,7 @@
 [package]
 name = "github-workflow"
 description = "GitHub Alfred Workflow to quickly search and open repositories."
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
 license = "MIT"
 version = "1.0.0"
 authors = ["Dean Karn <dean.karn@gmail.com>"]
