@@ -3,4 +3,5 @@
 members = [
     "datadog-workflow",
     "alfred-workflow",
+    "github-workflow",
 ]

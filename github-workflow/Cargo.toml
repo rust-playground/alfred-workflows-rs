@@ -1,0 +1,22 @@
+[package]
+name = "github-workflow"
+description = "GitHub Alfred Workflow to quickly search and open repositories."
+license = "MIT"
+version = "1.0.0"
+authors = ["Dean Karn <dean.karn@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+alfred = "4.0.1"
+clap = "2.32.0"
+dirs = "1.0.4"
+failure = "0.1.4"
+github-gql-rs = "0.0.1"
+serde = { version = "1.0.83", features = ["derive"] }
+serde_json = "1.0.33"
+chrono = {version = "0.4.6", features = ["serde"]}
+rusqlite = {version = "0.16.0",features = ["bundled"]}
+
+[dependencies.alfred-workflow]
+path = "../alfred-workflow"
+version = "1.0"

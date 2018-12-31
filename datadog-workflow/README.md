@@ -1,6 +1,6 @@
 # Datadog Workflow
 
-Datadog Alfred Workflow to search dashboards, screenboards and monitors
+Datadog Alfred Workflow to cache and search dashboards, screenboards and monitors
 
 Requirements
 -------------
