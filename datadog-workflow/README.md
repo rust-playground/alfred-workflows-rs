@@ -14,7 +14,7 @@ Installation
 
 Setup
 ------
-1. Have your Datadog Application key ready, if you don't have one you can find/generate here https://{company}.datadoghq.com/account/settings#api
+1. Have your Datadog Application key ready, if you don't have one you can find/generate here `https://{company}.datadoghq.com/account/settings#api`
 2. In Alfred type `dd ` you'll be presented with a settings + refresh option, navigate to settings, hit *TAB*
 3. You be presented with 2 options, ont for applicatio  key and another for api key, navigate to the application key, hit *TAB*
 4. Paste in you key and hit *ENTER*
