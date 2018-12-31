@@ -1,0 +1,18 @@
+language: rust
+rust:
+  - stable
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+notifications:
+  email:
+    recipients: dean.karn@gmail.com
+    on_success: change
+    on_failure: always
+
+script:
+  - cargo build --verbose --all
+  - cargo test --verbose --all

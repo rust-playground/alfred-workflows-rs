@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "datadog-workflow",
+    "alfred-workflow",
+]

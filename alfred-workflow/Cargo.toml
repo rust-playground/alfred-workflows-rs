@@ -1,0 +1,13 @@
+[package]
+name = "alfred-workflow"
+description = "This contains common and reusable abstractions for creating workflows."
+license = " MIT"
+version = "1.0.0"
+authors = ["Dean Karn <dean.karn@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+alfred = "4.0.1"
+dirs = "1.0.4"
+failure = "0.1.4"
+rusqlite = {version = "0.16.0",features = ["bundled"]}

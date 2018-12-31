@@ -1,0 +1,26 @@
+[package]
+authors = ["Dean Karn <dean.karn@gmail.com>"]
+license = " MIT"
+description = "Datadog Alfred Workflow to search dashboards, screenboards and monitors"
+edition = "2018"
+name = "datadog-workflow"
+version = "0.1.0"
+
+[dependencies]
+alfred = "4.0.1"
+chrono = { version = "0.4.6", features = ["serde"]}
+clap = "2.32.0"
+failure = "0.1.4"
+reqwest = "0.9.5"
+
+[dependencies.alfred-workflow]
+path = "../alfred-workflow"
+version = "1.0"
+
+[dependencies.rusqlite]
+features = ["bundled"]
+version = "0.16.0"
+
+[dependencies.serde]
+features = ["derive"]
+version = "1.0.83"
