@@ -2,10 +2,10 @@
 authors = ["Dean Karn <dean.karn@gmail.com>"]
 license = " MIT"
 description = "Datadog Alfred Workflow to search dashboards, screenboards and monitors"
-repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/alfred-workflow"
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/datadog-workflow"
 edition = "2018"
 name = "datadog-workflow"
-version = "1.0.0"
+version = "1.0.1"
 
 [dependencies]
 alfred = "4.0.1"

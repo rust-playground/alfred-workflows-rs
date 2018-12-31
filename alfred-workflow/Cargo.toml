@@ -1,8 +1,9 @@
 [package]
 name = "alfred-workflow"
 description = "This contains common and reusable abstractions for creating workflows."
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/alfred-workflow"
 license = " MIT"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Dean Karn <dean.karn@gmail.com>"]
 edition = "2018"
 
