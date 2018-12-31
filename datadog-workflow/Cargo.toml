@@ -5,7 +5,7 @@ description = "Datadog Alfred Workflow to search dashboards, screenboards and mo
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/alfred-workflow"
 edition = "2018"
 name = "datadog-workflow"
-version = "0.1.0"
+version = "1.0.0"
 
 [dependencies]
 alfred = "4.0.1"
