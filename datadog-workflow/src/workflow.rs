@@ -278,14 +278,14 @@ impl DatadogWorkflow {
         self.conn.prepare(
             "SELECT title, description, url FROM timeboards WHERE title LIKE ? ORDER BY modified DESC LIMIT 10",
         )?.query_map(&[&query], |row| {
-            let title: String = row.get(0);
-            let description: String = row.get(1);
-            let url: String = row.get(2);
-            alfred::ItemBuilder::new(title.clone())
+            let title: String = row.get(0)?;
+            let description: String = row.get(1)?;
+            let url: String = row.get(2)?;
+            Ok(alfred::ItemBuilder::new(title.clone())
                 .subtitle(description)
                 .autocomplete(title)
                 .arg(format!("open {}", url))
-                .into_item()
+                .into_item())
         })?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format_err!("failed querying timeboards: {}", e))
@@ -296,14 +296,14 @@ impl DatadogWorkflow {
         self.conn.prepare(
             "SELECT title, description, url FROM screenboards WHERE title LIKE ? ORDER BY modified DESC LIMIT 10",
         )?.query_map(&[&query], |row| {
-            let title: String = row.get(0);
-            let description: String = row.get(1);
-            let url: String = row.get(2);
-            alfred::ItemBuilder::new(title.clone())
+            let title: String = row.get(0)?;
+            let description: String = row.get(1)?;
+            let url: String = row.get(2)?;
+            Ok(alfred::ItemBuilder::new(title.clone())
                 .subtitle(description)
                 .autocomplete(title)
                 .arg(format!("open {}", url))
-                .into_item()
+                .into_item())
         })?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format_err!("failed querying screenboards: {}", e))
@@ -320,14 +320,14 @@ impl DatadogWorkflow {
                  LIMIT 10",
             )?
             .query_map(&[&query], |row| {
-                let title: String = row.get(0);
-                let description: String = row.get(1);
-                let url: String = row.get(2);
-                alfred::ItemBuilder::new(title.clone())
+                let title: String = row.get(0)?;
+                let description: String = row.get(1)?;
+                let url: String = row.get(2)?;
+                Ok(alfred::ItemBuilder::new(title.clone())
                     .subtitle(description)
                     .autocomplete(title)
                     .arg(format!("open {}", url))
-                    .into_item()
+                    .into_item())
             })?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| format_err!("failed querying dashboards: {}", e))
@@ -355,13 +355,13 @@ impl DatadogWorkflow {
         self.conn
             .prepare(&select)?
             .query_map(&params, |row| {
-                let name: String = row.get(0);
-                let url: String = row.get(1);
-                alfred::ItemBuilder::new(name.clone())
+                let name: String = row.get(0)?;
+                let url: String = row.get(1)?;
+                Ok(alfred::ItemBuilder::new(name.clone())
                     .subtitle(name.clone())
                     .autocomplete(name)
                     .arg(format!("open {}", url))
-                    .into_item()
+                    .into_item())
             })?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| format_err!("failed querying monitors: {}", e))

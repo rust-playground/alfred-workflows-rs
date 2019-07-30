@@ -3,12 +3,12 @@ name = "alfred-workflow"
 description = "This contains common and reusable abstractions for creating workflows."
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/alfred-workflow"
 license = " MIT"
-version = "1.0.1"
+version = "1.1.0"
 authors = ["Dean Karn <dean.karn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 alfred = "4.0.1"
-dirs = "1.0.4"
-failure = "0.1.4"
-rusqlite = {version = "0.16.0",features = ["bundled"]}
+dirs = "2.0.2"
+failure = "0.1.5"
+rusqlite = {version = "0.20.0",features = ["bundled"]}

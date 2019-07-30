@@ -3,20 +3,21 @@ name = "github-workflow"
 description = "GitHub Alfred Workflow to quickly search and open repositories."
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
 license = "MIT"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Dean Karn <dean.karn@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 alfred = "4.0.1"
-clap = "2.32.0"
-dirs = "1.0.4"
-failure = "0.1.4"
-github-gql-rs = "0.0.1"
-serde = { version = "1.0.83", features = ["derive"] }
-serde_json = "1.0.33"
-chrono = {version = "0.4.6", features = ["serde"]}
-rusqlite = {version = "0.16.0",features = ["bundled"]}
+clap = "2.33.0"
+dirs = "2.0.2"
+failure = "0.1.5"
+github-gql-rs = { git = "https://github.com/github-rs/github-rs", rev = "a9861228dc41c601cec4481d56d170ae5d9d1e50" }
+serde = { version = "1.0.98", features = ["derive"] }
+serde_json = "1.0.40"
+chrono = {version = "0.4.7", features = ["serde"]}
+rusqlite = {version = "0.20.0",features = ["bundled"]}
+
 
 [dependencies.alfred-workflow]
 path = "../alfred-workflow"

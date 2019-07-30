@@ -139,14 +139,14 @@ impl GithubWorkflow {
         self.conn.prepare(
             "SELECT name_with_owner, name, url FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT 10",
         )?.query_map(&[&query], |row| {
-            let name_with_owner: String = row.get(0);
-            let name: String = row.get(1);
-            let url: String = row.get(2);
-            alfred::ItemBuilder::new(name_with_owner)
+            let name_with_owner: String =      row.get(0)?;
+            let name: String = row.get(1)?;
+            let url: String = row.get(2)?;
+            Ok(alfred::ItemBuilder::new(name_with_owner)
                 .subtitle(name.clone())
                 .autocomplete(name)
                 .arg(format!("open {}", url))
-                .into_item()
+                .into_item())
         })?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format_err!("failed querying items: {}", e))
