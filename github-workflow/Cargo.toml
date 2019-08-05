@@ -1,24 +1,44 @@
 [package]
-name = "github-workflow"
-description = "GitHub Alfred Workflow to quickly search and open repositories."
-repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
-license = "MIT"
-version = "1.1.0"
 authors = ["Dean Karn <dean.karn@gmail.com>"]
+description = "GitHub Alfred Workflow to quickly search and open repositories."
 edition = "2018"
+license = "MIT"
+name = "github-workflow"
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
+version = "1.1.0"
+
+[[bin]]
+name = "github-workflow"
+path = "src/bin/main.rs"
 
 [dependencies]
 alfred = "4.0.1"
 clap = "2.33.0"
+diesel_migrations = "1.4.0"
 dirs = "2.0.2"
 failure = "0.1.5"
-github-gql-rs = { git = "https://github.com/github-rs/github-rs", rev = "a9861228dc41c601cec4481d56d170ae5d9d1e50" }
-serde = { version = "1.0.98", features = ["derive"] }
+reqwest = { version = "0.9.19", features = ["rustls-tls"] }
 serde_json = "1.0.40"
-chrono = {version = "0.4.7", features = ["serde"]}
-rusqlite = {version = "0.20.0",features = ["bundled"]}
 
+[dependencies.chrono]
+features = ["serde"]
+version = "0.4.7"
 
-[dependencies.alfred-workflow]
-path = "../alfred-workflow"
-version = "1.0"
+[dependencies.diesel]
+features = [
+    "sqlite",
+    "chrono",
+]
+version = "1.4.2"
+
+#[dependencies.github-gql-rs]
+#git = "https://github.com/github-rs/github-rs"
+#rev = "a9861228dc41c601cec4481d56d170ae5d9d1e50"
+
+[dependencies.serde]
+features = ["derive"]
+version = "1.0.98"
+
+[lib]
+name = "github_workflow_lib"
+path = "src/lib.rs"

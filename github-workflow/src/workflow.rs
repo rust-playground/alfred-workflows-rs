@@ -1,74 +1,46 @@
+use crate::database::models::NewRepository;
+use crate::database::DbContext;
 use alfred::Item;
 use chrono::prelude::*;
 use failure::{format_err, Error};
-use github_gql::{client::Github, query::Query};
-use rusqlite::{types::ToSql, Connection, NO_PARAMS};
+use reqwest::header::CONTENT_TYPE;
+use reqwest::Response;
+use serde_json::Value;
+use std::borrow::Borrow;
 
 pub struct GithubWorkflow {
-    conn: Connection,
+    db: DbContext,
 }
 
 impl GithubWorkflow {
     pub fn create() -> Result<Self, Error> {
-        let conn = alfred_workflow::open_database_or_else("github", GithubWorkflow::create_tables)?;
-        Ok(GithubWorkflow { conn })
-    }
-
-    fn create_tables(conn: &Connection) -> Result<(), Error> {
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS repositories (
-                    name_with_owner TEXT NOT NULL PRIMARY KEY,
-                    name            TEXT NOT NULL,
-                    url             TEXT NOT NULL,
-                    pushed_at       INTEGER NOT NULL
-                );",
-            NO_PARAMS,
-        )?;
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS config (
-                    key   TEXT NOT NULL PRIMARY KEY,
-                    value TEXT NOT NULL
-                );",
-            NO_PARAMS,
-        )?;
-        Ok(())
+        let db = DbContext::new()?;
+        Ok(GithubWorkflow { db })
     }
 
     pub fn set_token(&self, token: &str) -> Result<(), Error> {
-        self.conn
-            .execute(
-                "INSERT INTO config (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                &["token", token],
-            )
-            .map(|_|Ok(()))
-            .map_err(|e| format_err!("failed to insert token: {}", e))?
+        self.db.run_migrations()?;
+        self.db.set_token(token)?;
+        Ok(())
     }
 
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
-        let gh_token: String = self
-            .conn
-            .prepare("SELECT value FROM config WHERE key=?")?
-            .query_row(&["token"], |row| row.get(0))?;
+        self.db.run_migrations()?;
+        let gh_token = self.db.get_token()?.value;
 
-        let mut g = Github::new(gh_token)
-            .map_err(|e| format_err!("failed to initialize GitHub client: {}", e))?;
+        //        let mut g = Github::new(gh_token)
+        //            .map_err(|e| format_err!("failed to initialize GitHub client: {}", e))?;
 
-        self.conn
-            .execute("DELETE FROM repositories;", NO_PARAMS)
-            .map_err(|e| format_err!("failed to delete existing repositories: {}", e))?;
-
-        self.refresh(&mut g, "")?;
-
-        // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn
-            .execute("VACUUM;", NO_PARAMS)
-            .map(|_| Ok(()))
-            .map_err(|e| format_err!("failed to VACCUM database: {}", e))?
+        self.db.delete_repositories()?;
+        self.refresh(gh_token.as_ref(), "")?;
+        // and DB cleanup work
+        self.db.optimize()?;
+        Ok(())
     }
 
-    fn refresh(&mut self, g: &mut Github, cursor: &str) -> Result<(), Error> {
+    fn refresh(&mut self, token: &str, cursor: &str) -> Result<(), Error> {
         let arg = if cursor != "" {
-            format!(", after:\\\"{}\\\"", cursor)
+            format!(", after:\"{}\"", cursor)
         } else {
             "".to_string()
         };
@@ -94,62 +66,66 @@ impl GithubWorkflow {
             }}",
             arg
         );
-        let (_, _, res) = g
-            .query::<Results>(&Query::new_raw(query))
-            .map_err(|e| format_err!("failed GitHub query, check permissions: {}", e))?;
+        let mut escaped = query.to_string();
+        escaped = escaped.replace("\n", "\\n");
+        escaped = escaped.replace("\"", "\\\"");
 
-        if let Some(res) = res {
-            let tx = self.conn.transaction()?;
-            let mut stmt = tx.prepare("INSERT INTO repositories (name_with_owner, name, url, pushed_at) VALUES (?1, ?2, ?3, ?4)")?;
+        let mut q = String::from("{ \"query\": \"");
+        q.push_str(&escaped);
+        q.push_str("\" }");
 
-            let nodes =
-                res.data
-                    .viewer
-                    .repositories
-                    .edges
-                    .into_iter()
-                    .filter_map(|edge| match edge {
-                        Some(e) => e.node,
-                        _ => None,
-                    });
-            for node in nodes {
-                stmt.execute(&[
-                    &node.name_with_owner as &ToSql,
-                    &node.name,
-                    &node.url,
-                    &node.pushed_at.timestamp(),
-                ])
-                .map_err(|e| format_err!("failed to insert repository record: {}", e))?;
-            }
+        if cursor != "" {
+            println!("query:{}", &q);
+        }
 
-            stmt.finalize()?;
-            tx.commit()
-                .map_err(|e| format_err!("failed to commit repositories transaction: {}", e))?;
+        let mut resp: Results = reqwest::Client::new()
+            .post("https://api.github.com/graphql")
+            .bearer_auth(token)
+            .header(CONTENT_TYPE, "application/json")
+            .body(q)
+            .send()?
+            .json()?;
 
-            let r = res.data.viewer.repositories.page_info;
-            if r.has_next_page {
-                return self.refresh(g, &r.end_cursor);
-            }
+        let repositories = results
+            .data
+            .viewer
+            .repositories
+            .edges
+            .iter()
+            .filter_map(|edge| match edge {
+                Some(e) => e.node.as_ref(),
+                _ => None,
+            })
+            .map(|node| NewRepository {
+                name_with_owner: node.name_with_owner.as_ref(),
+                name: node.name.as_ref(),
+                url: node.url.as_ref(),
+                pushed_at: node.pushed_at.naive_utc(),
+            })
+            .collect::<Vec<NewRepository>>();
+
+        self.db.insert_repositories(&repositories)?;
+
+        let r = results.data.viewer.repositories.page_info;
+        if r.has_next_page {
+            // TODO: split the github fetching into it's own module and make it non self referencing.
+            return self.refresh(token, &r.end_cursor);
         }
         Ok(())
     }
 
     pub fn query<'items>(&self, repo_name: &str) -> Result<Vec<Item<'items>>, Error> {
-        let query = format!("%{}%", repo_name);
-        self.conn.prepare(
-            "SELECT name_with_owner, name, url FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT 10",
-        )?.query_map(&[&query], |row| {
-            let name_with_owner: String =      row.get(0)?;
-            let name: String = row.get(1)?;
-            let url: String = row.get(2)?;
-            Ok(alfred::ItemBuilder::new(name_with_owner)
-                .subtitle(name.clone())
-                .autocomplete(name)
-                .arg(format!("open {}", url))
-                .into_item())
-        })?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format_err!("failed querying items: {}", e))
+        self.db
+            .find_repositories(repo_name, 10)?
+            .into_iter()
+            .map(|repo| {
+                Ok(alfred::ItemBuilder::new(repo.name_with_owner)
+                    .subtitle(repo.name.clone())
+                    .autocomplete(repo.name)
+                    .arg(format!("open {}", repo.url))
+                    .into_item())
+            })
+            .collect::<Result<Vec<_>, _>>()
     }
 }
 

@@ -1,9 +1,11 @@
+use alfred::{json, Item};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
 };
 use failure::{format_err, Error};
-use github_workflow::workflow::GithubWorkflow;
+use github_workflow_lib::workflow::GithubWorkflow;
+use std::io::Write;
 use std::{io, process::Command};
 
 const SUBCOMMAND_SETTINGS: &str = ">settings";
@@ -71,7 +73,7 @@ fn main() -> Result<(), Error> {
                     SUBCOMMAND_SETTINGS, SUBCOMMAND_LOGIN, token, FLAG_SET
                 ))
                 .into_item();
-                alfred_workflow::write_items(io::stdout(), &[item])
+                write_items(io::stdout(), &[item])
             }
             _ => Err(format_err!("No suitable SubCommand found")),
         },
@@ -87,7 +89,7 @@ fn main() -> Result<(), Error> {
         }
         (external, Some(_)) => {
             let items = wf.query(&external)?;
-            alfred_workflow::write_items(io::stdout(), &items)
+            write_items(io::stdout(), &items)
         }
         _ => {
             let login = alfred::ItemBuilder::new(SUBCOMMAND_LOGIN)
@@ -100,7 +102,15 @@ fn main() -> Result<(), Error> {
                 .subtitle("Refresh Cache, be patient you will be notified once complete")
                 .arg(format!("{} {}", SUBCOMMAND_SETTINGS, SUBCOMMAND_REFRESH))
                 .into_item();
-            alfred_workflow::write_items(io::stdout(), &[login, refresh])
+            write_items(io::stdout(), &[login, refresh])
         }
     }
+}
+
+fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
+where
+    W: Write,
+{
+    json::write_items(writer, &items[..])
+        .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
 }
