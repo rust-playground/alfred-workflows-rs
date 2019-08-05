@@ -9,10 +9,12 @@ pub struct GitHubAPI<'a> {
 }
 
 impl<'a> GitHubAPI<'a> {
+    #[inline]
     pub fn new(token: &'a str) -> Self {
         GitHubAPI { token }
     }
 
+    #[inline]
     pub fn accessible_repositories(&self) -> OwnedRepositories {
         OwnedRepositories {
             api: self,
@@ -21,6 +23,7 @@ impl<'a> GitHubAPI<'a> {
         }
     }
 
+    #[inline]
     fn fetch_repositories(&self, cursor: Option<String>) -> Result<Results, Error> {
         let arg = cursor.map_or_else(|| String::from(""), |v| format!(", after:\"{}\"", v));
         let query = format!(
@@ -42,27 +45,6 @@ impl<'a> GitHubAPI<'a> {
             }}",
             arg
         );
-        //        let query = format!(
-        //            "query {{ \
-        //                viewer {{ \
-        //                    repositories(first: 100, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]{}) {{ \
-        //                        pageInfo {{ \
-        //                            hasNextPage \
-        //                            endCursor \
-        //                        }} \
-        //                        edges {{ \
-        //                            node {{ \
-        //                                name \
-        //                                nameWithOwner \
-        //                                pushedAt \
-        //                                url \
-        //                            }} \
-        //                        }} \
-        //                    }} \
-        //                }} \
-        //            }}",
-        //            arg
-        //        );
 
         // TODO: clean this up with a proper type that will escape automatically when serialized to JSON
         let mut escaped = query.to_string();
@@ -143,9 +125,6 @@ struct PageInfo {
 
 #[derive(Debug, Deserialize)]
 struct Node {
-    //    name: String,
-    //    #[serde(rename = "nameWithOwner")]
-    //    name_with_owner: String,
     url: String,
     #[serde(rename = "pushedAt")]
     pushed_at: DateTime<Utc>,

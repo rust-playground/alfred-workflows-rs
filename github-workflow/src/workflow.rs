@@ -2,7 +2,6 @@ use crate::database::models::NewRepository;
 use crate::database::DbContext;
 use crate::github::GitHubAPI;
 use alfred::Item;
-use chrono::prelude::*;
 use failure::Error;
 
 pub struct GithubWorkflow {
@@ -10,17 +9,20 @@ pub struct GithubWorkflow {
 }
 
 impl GithubWorkflow {
+    #[inline]
     pub fn create() -> Result<Self, Error> {
         let db = DbContext::new()?;
         Ok(GithubWorkflow { db })
     }
 
+    #[inline]
     pub fn set_token(&self, token: &str) -> Result<(), Error> {
         self.db.run_migrations()?;
         self.db.set_token(token)?;
         Ok(())
     }
 
+    #[inline]
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
         self.db.run_migrations()?;
         let gh_token = self.db.get_token()?.value;
@@ -41,12 +43,12 @@ impl GithubWorkflow {
                     .as_ref(),
             )?;
         }
-
         // and DB cleanup work
         self.db.optimize()?;
         Ok(())
     }
 
+    #[inline]
     pub fn query<'items>(&self, repo_name: &str) -> Result<Vec<Item<'items>>, Error> {
         self.db
             .find_repositories(repo_name, 10)?

@@ -5,6 +5,7 @@ use clap::{
 };
 use failure::{format_err, Error};
 use github_workflow_lib::workflow::GithubWorkflow;
+use std::borrow::Cow;
 use std::io::Write;
 use std::{io, process::Command};
 
@@ -87,8 +88,18 @@ fn main() -> Result<(), Error> {
             }
             Ok(())
         }
-        (external, Some(_)) => {
-            let items = wf.query(&external)?;
+        (external, Some(m)) => {
+            let query = match m.args.get("") {
+                Some(args) => Cow::Owned(
+                    args.vals
+                        .iter()
+                        .map(|s| s.to_string_lossy().into_owned())
+                        .collect::<Vec<String>>()
+                        .join(" "),
+                ),
+                None => Cow::Borrowed(external),
+            };
+            let items = wf.query(&query)?;
             write_items(io::stdout(), &items)
         }
         _ => {
