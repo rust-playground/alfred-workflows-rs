@@ -10,12 +10,12 @@ pub struct GitHubAPI<'a> {
 
 impl<'a> GitHubAPI<'a> {
     #[inline]
-    pub fn new(token: &'a str) -> Self {
+    pub const fn new(token: &'a str) -> Self {
         GitHubAPI { token }
     }
 
     #[inline]
-    pub fn accessible_repositories(&self) -> OwnedRepositories {
+    pub const fn accessible_repositories(&self) -> OwnedRepositories {
         OwnedRepositories {
             api: self,
             has_more: true,
@@ -107,7 +107,7 @@ impl<'a> Iterator for OwnedRepositories<'a> {
                         name_with_owner: format!("{}/{}", owner, name),
                         name,
                         url: node.url,
-                        pushed_at: node.pushed_at.naive_utc(),
+                        pushed_at: node.pushed_at,
                     }
                 })
                 .collect(),

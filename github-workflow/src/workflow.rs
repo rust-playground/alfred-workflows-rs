@@ -1,47 +1,29 @@
-use crate::database::models::NewRepository;
 use crate::database::DbContext;
 use crate::github::GitHubAPI;
 use alfred::Item;
 use failure::Error;
 
-pub struct GithubWorkflow {
+pub struct GithubWorkflow<'a> {
+    api_key: &'a str,
     db: DbContext,
 }
 
-impl GithubWorkflow {
+impl<'a> GithubWorkflow<'a> {
     #[inline]
-    pub fn create() -> Result<Self, Error> {
-        let db = DbContext::new()?;
-        Ok(GithubWorkflow { db })
-    }
-
-    #[inline]
-    pub fn set_token(&self, token: &str) -> Result<(), Error> {
-        self.db.run_migrations()?;
-        self.db.set_token(token)?;
-        Ok(())
+    pub fn create(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
+        let db = DbContext::new(database_url)?;
+        Ok(GithubWorkflow { api_key, db })
     }
 
     #[inline]
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
         self.db.run_migrations()?;
-        let gh_token = self.db.get_token()?.value;
-        let api = GitHubAPI::new(gh_token.as_str());
+        let api = GitHubAPI::new(self.api_key);
 
         self.db.delete_repositories()?;
 
         for v in api.accessible_repositories() {
-            self.db.insert_repositories(
-                v.iter()
-                    .map(|r| NewRepository {
-                        name_with_owner: r.name_with_owner.as_ref(),
-                        name: r.name.as_ref(),
-                        url: r.url.as_ref(),
-                        pushed_at: r.pushed_at,
-                    })
-                    .collect::<Vec<NewRepository>>()
-                    .as_ref(),
-            )?;
+            self.db.insert_repositories(&v)?;
         }
         // and DB cleanup work
         self.db.optimize()?;
