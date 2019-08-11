@@ -14,12 +14,8 @@ clap = "2.33.0"
 failure = "0.1.5"
 reqwest = "0.9.19"
 
-[dependencies.alfred-workflow]
-path = "../alfred-workflow"
-version = "1.0"
-
 [dependencies.rusqlite]
-features = ["bundled"]
+features = ["chrono", "bundled"]
 version = "0.20.0"
 
 [dependencies.serde]

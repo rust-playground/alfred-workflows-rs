@@ -5,7 +5,7 @@ edition = "2018"
 license = "MIT"
 name = "github-workflow"
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
-version = "1.1.0"
+version = "2.0.0"
 
 [[bin]]
 name = "github-workflow"
@@ -16,7 +16,7 @@ alfred = "4.0.1"
 clap = "2.33.0"
 dirs = "2.0.2"
 failure = "0.1.5"
-rusqlite = { version = "0.20.0", features = ["chrono"] }
+rusqlite = { version = "0.20.0", features = ["chrono", "bundled"] }
 serde_json = "1.0.40"
 
 [dependencies.chrono]
