@@ -11,6 +11,10 @@ version = "2.0.0"
 name = "github-workflow"
 path = "src/bin/main.rs"
 
+[lib]
+name = "github_workflow_lib"
+path = "src/lib.rs"
+
 [dependencies]
 alfred = "4.0.1"
 clap = "2.33.0"
@@ -31,6 +35,4 @@ version = "0.9.19"
 features = ["derive"]
 version = "1.0.98"
 
-[lib]
-name = "github_workflow_lib"
-path = "src/lib.rs"
+

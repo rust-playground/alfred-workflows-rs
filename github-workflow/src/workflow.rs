@@ -10,7 +10,7 @@ pub struct GithubWorkflow<'a> {
 
 impl<'a> GithubWorkflow<'a> {
     #[inline]
-    pub fn create(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
+    pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
         let db = DbContext::new(database_url)?;
         Ok(GithubWorkflow { api_key, db })
     }

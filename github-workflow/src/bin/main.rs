@@ -38,7 +38,7 @@ fn main() -> Result<(), Error> {
 
     let api_key = env::var("API_KEY")?;
     let database_url = env::var("DATABASE_URL")?;
-    let mut wf = GithubWorkflow::create(&api_key, &database_url)?;
+    let mut wf = GithubWorkflow::new(&api_key, &database_url)?;
 
     match matches.subcommand() {
         (SUBCOMMAND_SETTINGS, Some(m)) => match m.subcommand() {
