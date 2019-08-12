@@ -11,7 +11,7 @@ pub struct GitHubAPI<'a> {
 impl<'a> GitHubAPI<'a> {
     #[inline]
     pub const fn new(token: &'a str) -> Self {
-        GitHubAPI { token }
+        Self { token }
     }
 
     #[inline]

@@ -1,13 +1,8 @@
-use crate::database::models::{InsertMonitor, InsertScreenBoard, InsertTimeBoard};
 use crate::database::DbContext;
+use crate::datadog::DatadogAPI;
 use alfred::Item;
 use failure::Error;
-use reqwest::Client;
-use serde::Deserialize;
 use std::str;
-
-const APPLICATION_KEY: &str = "application_key";
-const API_KEY: &str = "api_key";
 
 pub struct DatadogWorkflow<'a> {
     api_key: &'a str,
@@ -31,73 +26,36 @@ impl<'a> DatadogWorkflow<'a> {
     }
 
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
-        let client = reqwest::Client::new();
+        let datadog_api = DatadogAPI::new(self.api_key, self.application_key);
         self.db.run_migrations()?;
-        self.refresh_timeboards(&client)?;
-        self.refresh_screenboards(&client)?;
-        self.refresh_monitors(&client)?;
+        self.refresh_timeboards(&datadog_api)?;
+        self.refresh_screenboards(&datadog_api)?;
+        self.refresh_monitors(&datadog_api)?;
 
         // and DB cleanup work
         self.db.optimize()
     }
 
-    fn refresh_timeboards(&mut self, client: &Client) -> Result<(), Error> {
+    fn refresh_timeboards(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
         let mut db = self.db.timeboards();
         db.delete_all()?;
-
-        #[derive(Debug, Deserialize)]
-        struct Dashboards {
-            #[serde(rename = "dashes")]
-            boards: Vec<InsertTimeBoard>,
-        }
-        let results = client
-            .get("https://api.datadoghq.com/api/v1/dash")
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
-            .send()?
-            .json::<Dashboards>()?
-            .boards;
+        let results = datadog_api.get_timeboards()?;
         db.insert(&results)?;
         Ok(())
     }
 
-    fn refresh_screenboards(&mut self, client: &Client) -> Result<(), Error> {
+    fn refresh_screenboards(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
         let mut db = self.db.screenboards();
         db.delete_all()?;
-
-        #[derive(Debug, Deserialize)]
-        struct ScreenBoards {
-            #[serde(rename = "screenboards")]
-            boards: Vec<InsertScreenBoard>,
-        }
-
-        let results = client
-            .get("https://api.datadoghq.com/api/v1/screen")
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
-            .send()?
-            .json::<ScreenBoards>()?
-            .boards;
+        let results = datadog_api.get_screenboards()?;
         db.insert(&results)?;
         Ok(())
     }
 
-    fn refresh_monitors(&mut self, client: &Client) -> Result<(), Error> {
+    fn refresh_monitors(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
         let mut db = self.db.monitors();
         db.delete_all()?;
-
-        let results = client
-            .get("https://api.datadoghq.com/api/v1/monitor")
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
-            .send()?
-            .json::<Vec<InsertMonitor>>()?;
+        let results = datadog_api.get_monitors()?;
         db.insert(&results)?;
         Ok(())
     }

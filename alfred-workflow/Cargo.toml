@@ -11,4 +11,4 @@ edition = "2018"
 alfred = "4.0.1"
 dirs = "2.0.2"
 failure = "0.1.5"
-rusqlite = {version = "0.20.0",features = ["bundled"]}
+rusqlite = {version = "0.20.0",features = ["chrono", "bundled"]}

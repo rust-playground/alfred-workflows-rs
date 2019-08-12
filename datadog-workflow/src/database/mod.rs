@@ -57,7 +57,7 @@ impl DbContext {
             "SELECT title, description, url, modified FROM timeboards WHERE title LIKE ?1
                          UNION ALL
                          SELECT title, description, url, modified FROM screenboards WHERE title LIKE ?1
-                         ORDER BY modified
+                         ORDER BY modified DESC
                          LIMIT ?",
         )?.query_map(&[&query as &ToSql,&limit], |row| {
             Ok(Dashboard{
