@@ -1,13 +1,13 @@
+use alfred::{json, Item};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand,
 };
-use datadog_workflow::workflow::DatadogWorkflow;
+use datadog_workflow_lib::workflow::DatadogWorkflow;
 use failure::{format_err, Error};
-use std::{io, process::Command};
+use std::io::Write;
+use std::{env, io, process::Command};
 
 const SUBCOMMAND_SETTINGS: &str = "settings";
-const SUBCOMMAND_APPLICATION_KEY: &str = "application_key";
-const SUBCOMMAND_API_KEY: &str = "api_key";
 const SUBCOMMAND_REFRESH: &str = "refresh";
 const SUBCOMMAND_TIMEBOARDS: &str = "t";
 const SUBCOMMAND_SCREENBOARDS: &str = "s";
@@ -15,10 +15,8 @@ const SUBCOMMAND_DASHBOARDS: &str = "d";
 const SUBCOMMAND_MONITORS: &str = "m";
 const SUBCOMMAND_OPEN: &str = "open";
 const ARG_INPUT: &str = "input";
-const ARG_KEY: &str = "key";
 const ARG_QUERY: &str = "query";
 const ARG_TAG: &str = "tag";
-const FLAG_SET: &str = "set";
 
 fn main() -> Result<(), Error> {
     let matches = app_from_crate!("\n")
@@ -35,26 +33,6 @@ fn main() -> Result<(), Error> {
         .subcommand(
             SubCommand::with_name(SUBCOMMAND_SETTINGS)
                 .about("settings to control")
-                .subcommand(
-                    SubCommand::with_name(SUBCOMMAND_APPLICATION_KEY)
-                        .about("set the Datadog application key")
-                        .arg(Arg::with_name(ARG_KEY).help("the application key"))
-                        .arg(
-                            Arg::with_name(FLAG_SET)
-                                .long(FLAG_SET)
-                                .help("save the application key"),
-                        ),
-                )
-                .subcommand(
-                    SubCommand::with_name(SUBCOMMAND_API_KEY)
-                        .about("set the Datadog api key")
-                        .arg(Arg::with_name(ARG_KEY).help("the api key"))
-                        .arg(
-                            Arg::with_name(FLAG_SET)
-                                .long(FLAG_SET)
-                                .help("save the api key"),
-                        ),
-                )
                 .subcommand(
                     SubCommand::with_name(SUBCOMMAND_REFRESH).help("refreshes the cached data"),
                 ),
@@ -111,7 +89,10 @@ fn main() -> Result<(), Error> {
         )
         .get_matches();
 
-    let mut wf = DatadogWorkflow::create()?;
+    let api_key = env::var("API_KEY")?;
+    let application_key = env::var("APPLICATION_KEY")?;
+    let database_url = env::var("DATABASE_URL")?;
+    let mut wf = DatadogWorkflow::new(&api_key, &application_key, &database_url)?;
 
     match matches.subcommand() {
         (SUBCOMMAND_DASHBOARDS, Some(m)) => {
@@ -121,7 +102,7 @@ fn main() -> Result<(), Error> {
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_dashboards(&query)?;
-            alfred_workflow::write_items(io::stdout(), &items)
+            write_items(io::stdout(), &items)
         }
         (SUBCOMMAND_MONITORS, Some(m)) => {
             let query = m
@@ -131,7 +112,7 @@ fn main() -> Result<(), Error> {
                 .join(" ");
             let tag = m.value_of(ARG_TAG);
             let items = wf.query_monitors(&query, tag)?;
-            alfred_workflow::write_items(io::stdout(), &items)
+            write_items(io::stdout(), &items)
         }
         (SUBCOMMAND_TIMEBOARDS, Some(m)) => {
             let query = m
@@ -140,7 +121,7 @@ fn main() -> Result<(), Error> {
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_timeboards(&query)?;
-            alfred_workflow::write_items(io::stdout(), &items)
+            write_items(io::stdout(), &items)
         }
         (SUBCOMMAND_SCREENBOARDS, Some(m)) => {
             let query = m
@@ -149,7 +130,7 @@ fn main() -> Result<(), Error> {
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_screenboards(&query)?;
-            alfred_workflow::write_items(io::stdout(), &items)
+            write_items(io::stdout(), &items)
         }
         (SUBCOMMAND_SETTINGS, Some(m)) => match m.subcommand() {
             (SUBCOMMAND_REFRESH, Some(_)) => {
@@ -157,66 +138,7 @@ fn main() -> Result<(), Error> {
                 println!("Successfully Refreshed Datadog cache");
                 Ok(())
             }
-            (SUBCOMMAND_APPLICATION_KEY, Some(m)) => {
-                let key = m.value_of(ARG_KEY).unwrap_or_default();
-                if m.is_present(FLAG_SET) {
-                    wf.set_application_key(&key)?;
-                    println!("Successfully set Datadog application key");
-                    return Ok(());
-                }
-                let item = alfred::ItemBuilder::new(format!(
-                    "{} {} {}",
-                    SUBCOMMAND_SETTINGS, SUBCOMMAND_APPLICATION_KEY, key
-                ))
-                .subtitle("set Datadog application key")
-                .arg(format!(
-                    "{} {} {} --{}",
-                    SUBCOMMAND_SETTINGS, SUBCOMMAND_APPLICATION_KEY, key, FLAG_SET
-                ))
-                .into_item();
-                alfred_workflow::write_items(io::stdout(), &[item])
-            }
-            (SUBCOMMAND_API_KEY, Some(m)) => {
-                let key = m.value_of(ARG_KEY).unwrap_or_default();
-                if m.is_present(FLAG_SET) {
-                    wf.set_api_key(&key)?;
-                    println!("Successfully set Datadog api key");
-                    return Ok(());
-                }
-                let item = alfred::ItemBuilder::new(format!(
-                    "{} {} {}",
-                    SUBCOMMAND_SETTINGS, SUBCOMMAND_API_KEY, key
-                ))
-                .subtitle("set Datadog api key")
-                .arg(format!(
-                    "{} {} {} --{}",
-                    SUBCOMMAND_SETTINGS, SUBCOMMAND_API_KEY, key, FLAG_SET
-                ))
-                .into_item();
-                alfred_workflow::write_items(io::stdout(), &[item])
-            }
-            _ => {
-                let app_key = alfred::ItemBuilder::new(SUBCOMMAND_APPLICATION_KEY)
-                    .subtitle("set application key")
-                    .autocomplete(format!(
-                        " {} {} ",
-                        SUBCOMMAND_SETTINGS, SUBCOMMAND_APPLICATION_KEY
-                    ))
-                    .arg(format!(
-                        "{} {}",
-                        SUBCOMMAND_SETTINGS, SUBCOMMAND_APPLICATION_KEY
-                    ))
-                    .into_item();
-                let api_key = alfred::ItemBuilder::new(SUBCOMMAND_API_KEY)
-                    .subtitle("set api key")
-                    .autocomplete(format!(" {} {} ", SUBCOMMAND_SETTINGS, SUBCOMMAND_API_KEY))
-                    .arg(format!(
-                        "{} {}",
-                        SUBCOMMAND_SETTINGS, SUBCOMMAND_APPLICATION_KEY
-                    ))
-                    .into_item();
-                alfred_workflow::write_items(io::stdout(), &[app_key, api_key])
-            }
+            _ => Err(format_err!("No suitable SubCommand found")),
         },
         (SUBCOMMAND_OPEN, Some(m)) => {
             let input = m.value_of(ARG_INPUT).unwrap_or_default();
@@ -229,17 +151,19 @@ fn main() -> Result<(), Error> {
             Ok(())
         }
         _ => {
-            let settings = alfred::ItemBuilder::new(SUBCOMMAND_SETTINGS)
-                .subtitle("settings for the workflow")
-                .autocomplete(format!(" {} ", SUBCOMMAND_SETTINGS))
-                .arg(SUBCOMMAND_SETTINGS)
-                .into_item();
-
             let refresh = alfred::ItemBuilder::new(SUBCOMMAND_REFRESH)
                 .subtitle("Refresh Cache, be patient you will be notified once complete")
                 .arg(format!("{} {}", SUBCOMMAND_SETTINGS, SUBCOMMAND_REFRESH))
                 .into_item();
-            alfred_workflow::write_items(io::stdout(), &[settings, refresh])
+            write_items(io::stdout(), &[refresh])
         }
     }
+}
+
+fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
+where
+    W: Write,
+{
+    json::write_items(writer, &items[..])
+        .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
 }

@@ -5,23 +5,30 @@ description = "Datadog Alfred Workflow to search dashboards, screenboards and mo
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/datadog-workflow"
 edition = "2018"
 name = "datadog-workflow"
-version = "1.0.1"
+version = "2.0.0"
+readme = "README.md"
+keywords = ["alfred", "workflow", "datadog"]
+categories = ["development-tools"]
+
+[[bin]]
+name = "datadog-workflow"
+path = "src/bin/main.rs"
+
+[lib]
+name = "datadog_workflow_lib"
+path = "src/lib.rs"
 
 [dependencies]
 alfred = "4.0.1"
-chrono = { version = "0.4.6", features = ["serde"]}
-clap = "2.32.0"
-failure = "0.1.4"
-reqwest = "0.9.5"
-
-[dependencies.alfred-workflow]
-path = "../alfred-workflow"
-version = "1.0"
+chrono = { version = "0.4.7", features = ["serde"]}
+clap = "2.33.0"
+failure = "0.1.5"
+reqwest = "0.9.19"
 
 [dependencies.rusqlite]
-features = ["bundled"]
-version = "0.16.0"
+features = ["chrono", "bundled"]
+version = "0.20.0"
 
 [dependencies.serde]
 features = ["derive"]
-version = "1.0.83"
+version = "1.0.89"
