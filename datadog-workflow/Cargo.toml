@@ -6,6 +6,9 @@ repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master
 edition = "2018"
 name = "datadog-workflow"
 version = "2.0.0"
+readme = "README.md"
+keywords = ["alfred", "workflow", "datadog"]
+categories = ["development-tools"]
 
 [[bin]]
 name = "datadog-workflow"

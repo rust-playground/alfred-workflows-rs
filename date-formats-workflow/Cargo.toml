@@ -1,0 +1,18 @@
+[package]
+authors = ["Dean Karn <dean.karn@gmail.com>"]
+description = "Date Formats Workflow to quickly handle common data formats and conversions."
+edition = "2018"
+license = "MIT"
+name = "date-formats-workflow"
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/date-formats-workflow"
+version = "1.0.0"
+readme = "README.md"
+keywords = ["alfred", "workflow", "date", "time","datetime"]
+categories = ["date-and-time","development-tools"]
+
+[dependencies]
+alfred = "4.0.1"
+chrono = "0.4.7"
+chrono-tz = "0.5.1"
+clap = "2.33.0"
+failure = "0.1.5"

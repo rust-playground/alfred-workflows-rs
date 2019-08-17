@@ -6,6 +6,9 @@ license = "MIT"
 name = "github-workflow"
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow"
 version = "2.0.0"
+readme = "README.md"
+keywords = ["alfred", "workflow", "github"]
+categories = ["development-tools"]
 
 [[bin]]
 name = "github-workflow"
