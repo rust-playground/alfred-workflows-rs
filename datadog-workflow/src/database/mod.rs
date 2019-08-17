@@ -59,7 +59,7 @@ impl DbContext {
                          SELECT title, description, url, modified FROM screenboards WHERE title LIKE ?1
                          ORDER BY modified DESC
                          LIMIT ?",
-        )?.query_map(&[&query as &ToSql,&limit], |row| {
+        )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
             Ok(Dashboard{
                 title:row.get(0)?,
                 description:row.get(1)?,

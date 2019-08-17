@@ -51,7 +51,7 @@ impl DbContext {
 
         let results = self.conn.prepare(
             "SELECT name_with_owner, name, url, pushed_at FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT ?",
-        )?.query_map(&[&query as &ToSql,&limit], |row| {
+        )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
             Ok(Repository{
                 name_with_owner: row.get(0)?,
                 name:row.get(1)?,
@@ -74,7 +74,7 @@ impl DbContext {
 
         for repo in repositories {
             stmt.execute(&[
-                &repo.name_with_owner as &ToSql,
+                &repo.name_with_owner as &dyn ToSql,
                 &repo.name,
                 &repo.url,
                 &repo.pushed_at,

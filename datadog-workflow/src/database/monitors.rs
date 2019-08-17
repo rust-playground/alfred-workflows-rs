@@ -66,13 +66,13 @@ impl<'a> Monitors<'a> {
         for monitor in monitors {
             let url = format!("https://segment.datadoghq.com/monitors/{}", monitor.id);
             stmt_monitor.execute(&[
-                &monitor.id as &ToSql,
+                &monitor.id as &dyn ToSql,
                 &monitor.name,
                 &url,
                 &monitor.modified,
             ])?;
             for tag in &monitor.tags {
-                stmt_tags.execute(&[&monitor.id as &ToSql, &tag])?;
+                stmt_tags.execute(&[&monitor.id as &dyn ToSql, &tag])?;
             }
         }
 
@@ -96,7 +96,7 @@ impl<'a> Monitors<'a> {
         );
 
         let tag_query: String;
-        let mut params: Vec<&ToSql> = vec![&query];
+        let mut params: Vec<&dyn ToSql> = vec![&query];
         let mut select = "SELECT m.id, m.name, m.url, m.modified FROM monitors m ".to_owned();
         match tag {
             Some(ref t) => {
