@@ -20,7 +20,7 @@ Setup
 2. In Alfred set the `API_KEY` and `APPLICATION_KEY` environment variables for the workflow. ![Alfred Settings](https://github.com/rust-playground/alfred-workflows-rs/raw/master/datadog-workflow/datadog.png)
 3. In Alfred set the `SUBDOMAIN`.
 4. In Alfred set the Datadog `API_URL`, by default it's set to the US value.
-5. In Alfred type `dd `, navigate to refresh, hit *ENTER* to cache/index your Datsdog timeboards, screenboards and monitors; this may take some time depending on the number you organization has, there will be a notification popup once complete.
+5. In Alfred type `dd `, navigate to refresh, hit *ENTER* to cache/index your Datadog timeboards, screenboards and monitors; this may take some time depending on the number your organization has, there will be a notification popup once complete.
 
 Usage
 ------
