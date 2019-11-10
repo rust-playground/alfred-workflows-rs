@@ -44,7 +44,10 @@ impl<'a> Timeboards<'a> {
         let mut stmt = tx.prepare("INSERT INTO timeboards (id, title, description, url, modified) VALUES (?1, ?2, ?3, ?4, ?5)")?;
 
         for board in timeboards {
-            let url = format!("https://segment.datadoghq.com/dash/{}", board.id);
+            let url = format!(
+                "https://{}.datadoghq.com/dash/{}",
+                self.db.subdomain, board.id
+            );
             stmt.execute(&[
                 &board.id as &dyn ToSql,
                 &board.title,

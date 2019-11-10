@@ -92,7 +92,15 @@ fn main() -> Result<(), Error> {
     let api_key = env::var("API_KEY")?;
     let application_key = env::var("APPLICATION_KEY")?;
     let database_url = env::var("DATABASE_URL")?;
-    let mut wf = DatadogWorkflow::new(&api_key, &application_key, &database_url)?;
+    let api_url = env::var("API_URL")?;
+    let subdomain = env::var("SUBDOMAIN")?;
+    let mut wf = DatadogWorkflow::new(
+        &api_key,
+        &application_key,
+        &database_url,
+        &api_url,
+        &subdomain,
+    )?;
 
     match matches.subcommand() {
         (SUBCOMMAND_DASHBOARDS, Some(m)) => {

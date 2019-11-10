@@ -9,15 +9,24 @@ const API_KEY: &str = "api_key";
 pub struct DatadogAPI<'a> {
     api_key: &'a str,
     application_key: &'a str,
+    api_url: &'a str,
+    subdomain: &'a str,
     client: Client,
 }
 
 impl<'a> DatadogAPI<'a> {
     #[inline]
-    pub fn new(api_key: &'a str, application_key: &'a str) -> Self {
+    pub fn new(
+        api_key: &'a str,
+        application_key: &'a str,
+        api_url: &'a str,
+        subdomain: &'a str,
+    ) -> Self {
         Self {
             api_key,
             application_key,
+            api_url,
+            subdomain,
             client: reqwest::Client::new(),
         }
     }
@@ -31,7 +40,7 @@ impl<'a> DatadogAPI<'a> {
         }
         let results = self
             .client
-            .get("https://api.datadoghq.com/api/v1/dash")
+            .get(&format!("{}/v1/dash", self.api_url))
             .query(&[
                 (APPLICATION_KEY, self.application_key),
                 (API_KEY, self.api_key),
@@ -52,7 +61,7 @@ impl<'a> DatadogAPI<'a> {
 
         let results = self
             .client
-            .get("https://api.datadoghq.com/api/v1/screen")
+            .get(&format!("{}/v1/screen", self.api_url))
             .query(&[
                 (APPLICATION_KEY, self.application_key),
                 (API_KEY, self.api_key),
@@ -67,7 +76,7 @@ impl<'a> DatadogAPI<'a> {
     pub fn get_monitors(&self) -> Result<Vec<InsertMonitor>, Error> {
         let results = self
             .client
-            .get("https://api.datadoghq.com/api/v1/monitor")
+            .get(&format!("{}/v1/monitor", self.api_url))
             .query(&[
                 (APPLICATION_KEY, self.application_key),
                 (API_KEY, self.api_key),

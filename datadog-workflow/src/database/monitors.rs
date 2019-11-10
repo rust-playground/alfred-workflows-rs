@@ -64,7 +64,10 @@ impl<'a> Monitors<'a> {
         let mut stmt_tags = tx.prepare("INSERT INTO monitor_tags (id, name) VALUES (?1, ?2)")?;
 
         for monitor in monitors {
-            let url = format!("https://segment.datadoghq.com/monitors/{}", monitor.id);
+            let url = format!(
+                "https://{}.datadoghq.com/monitors/{}",
+                self.db.subdomain, monitor.id
+            );
             stmt_monitor.execute(&[
                 &monitor.id as &dyn ToSql,
                 &monitor.name,
