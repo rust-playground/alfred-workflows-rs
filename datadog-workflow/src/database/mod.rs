@@ -13,13 +13,14 @@ use rusqlite::{Connection, ToSql, NO_PARAMS};
 #[derive(Debug)]
 pub struct DbContext {
     conn: Connection,
+    subdomain: String,
 }
 
 impl DbContext {
     #[inline]
-    pub fn new(database_url: &str) -> Result<Self, Error> {
+    pub fn new(database_url: &str, subdomain: String) -> Result<Self, Error> {
         let conn = Connection::open(&database_url)?;
-        Ok(DbContext { conn })
+        Ok(DbContext { conn, subdomain })
     }
 
     // TODO: make interior mutable instead of everything having to be mutable

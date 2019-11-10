@@ -46,7 +46,10 @@ impl<'a> Screenboards<'a> {
         let mut stmt = tx.prepare("INSERT INTO screenboards (id, title, description, url, modified) VALUES (?1, ?2, ?3, ?4, ?5)")?;
 
         for board in screenboards {
-            let url = format!("https://segment.datadoghq.com/screen/{}", board.id);
+            let url = format!(
+                "https://{}.datadoghq.com/screen/{}",
+                self.db.subdomain, board.id
+            );
             stmt.execute(&[
                 &board.id as &dyn ToSql,
                 &board.title,

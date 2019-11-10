@@ -7,7 +7,9 @@ use std::str;
 pub struct DatadogWorkflow<'a> {
     api_key: &'a str,
     application_key: &'a str,
+    api_url: &'a str,
     db: DbContext,
+    subdomain: &'a str,
 }
 
 impl<'a> DatadogWorkflow<'a> {
@@ -16,17 +18,26 @@ impl<'a> DatadogWorkflow<'a> {
         api_key: &'a str,
         application_key: &'a str,
         database_url: &str,
+        api_url: &'a str,
+        subdomain: &'a str,
     ) -> Result<Self, Error> {
-        let db = DbContext::new(database_url)?;
+        let db = DbContext::new(database_url, subdomain.to_owned())?;
         Ok(DatadogWorkflow {
             api_key,
             application_key,
             db,
+            api_url,
+            subdomain,
         })
     }
 
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
-        let datadog_api = DatadogAPI::new(self.api_key, self.application_key);
+        let datadog_api = DatadogAPI::new(
+            self.api_key,
+            self.application_key,
+            self.api_url,
+            self.subdomain,
+        );
         self.db.run_migrations()?;
         self.refresh_timeboards(&datadog_api)?;
         self.refresh_screenboards(&datadog_api)?;
