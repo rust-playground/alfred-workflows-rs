@@ -226,8 +226,8 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
 
 #[inline]
 fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
-where
-    W: Write,
+    where
+        W: Write,
 {
     json::write_items(writer, &items[..])
         .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
@@ -251,7 +251,7 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     let rfc_2822 = build_item(dt.to_rfc2822(), "rfc_2822");
     let alt = build_item(dt.format("%e %b %Y %H:%M:%S").to_string(), "");
 
-    let diff = Utc::now().signed_duration_since(dt.with_timezone(&Utc));
+    let diff = dt.with_timezone(&Utc).signed_duration_since(Utc::now());
     let attr = if diff.num_nanoseconds().unwrap() < 0 {
         "ago"
     } else {
@@ -260,9 +260,9 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     let diff_str = format!(
         "{:?}d, {:?}h, {:?}m, {:?}s {}",
         diff.num_days().abs(),
-        diff.num_hours().abs(),
-        diff.num_minutes().abs(),
-        diff.num_seconds().abs(),
+        diff.num_hours().abs() % 24,
+        diff.num_minutes().abs() % 60,
+        diff.num_seconds().abs() % 60,
         attr
     );
     let time_since = build_item(
