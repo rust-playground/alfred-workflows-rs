@@ -1,6 +1,7 @@
 use alfred::{json, Item};
 use chrono::prelude::*;
 use chrono_tz::Tz;
+use chrono::{Datelike, Timelike, Utc, Local};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
@@ -10,6 +11,7 @@ use failure::{format_err, Error};
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const SUBCOMMAND_NOW: &str = "now";
 const SUBCOMMAND_PRINT: &str = "print";
@@ -249,9 +251,34 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     let rfc_2822 = build_item(dt.to_rfc2822(), "rfc_2822");
     let alt = build_item(dt.format("%e %b %Y %H:%M:%S").to_string(), "");
 
+    let diff = Utc::now().signed_duration_since(dt.with_timezone(&Utc));
+    let attr = if diff.num_nanoseconds().unwrap() < 0 {
+        "ago"
+    } else {
+        "to go"
+    };
+    let diff_str = format!(
+        "{:?}d, {:?}h, {:?}m, {:?}s {}",
+        diff.num_days().abs(),
+        diff.num_hours().abs(),
+        diff.num_minutes().abs(),
+        diff.num_seconds().abs(),
+        attr
+    );
+    let time_since = build_item(
+        diff_str,
+        "Time since",
+    );
+
+    let time_current_tz = build_item(
+        dt.with_timezone(&Local).format("%e %b %Y %H:%M:%S").to_string(),
+        "Time in local timezone",
+    );
+
+
     write_items(
         io::stdout(),
-        &[unix_sec, unix_milli, unix_nano, alt, rfc_2822, rfc_3339],
+        &[unix_sec, unix_milli, unix_nano, alt, time_current_tz, rfc_2822, rfc_3339, time_since],
     )
 }
 
