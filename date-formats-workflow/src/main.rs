@@ -257,6 +257,11 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     } else {
         "to go"
     };
+    let decor = if diff.num_nanoseconds().unwrap() < 0 {
+        "Time since"
+    } else {
+        "Time until"
+    };
     let diff_str = format!(
         "{:?}d, {:?}h, {:?}m, {:?}s {}",
         diff.num_days().abs(),
@@ -267,7 +272,7 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     );
     let time_since = build_item(
         diff_str,
-        "Time since",
+        decor,
     );
 
     let time_current_tz = build_item(
