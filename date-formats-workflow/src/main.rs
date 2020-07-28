@@ -1,7 +1,7 @@
 use alfred::{json, Item};
 use chrono::prelude::*;
+use chrono::{Local, Utc};
 use chrono_tz::Tz;
-use chrono::{Datelike, Timelike, Utc, Local};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
@@ -11,7 +11,6 @@ use failure::{format_err, Error};
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 const SUBCOMMAND_NOW: &str = "now";
 const SUBCOMMAND_PRINT: &str = "print";
@@ -74,7 +73,7 @@ fn main() -> Result<(), Error> {
                         match arg.as_str() {
                             // some funny business to parse the tz because of accepting
                             // arbitrary text before it
-                            "-t" | "-tz" => {
+                            "-t" | "--tz" => {
                                 break 'outer;
                             }
                             _ => time_args.push(arg),
@@ -109,9 +108,9 @@ const NAIVE_DATE_PARSE_FORMATS: &[&str] = &["%Y-%m-%d"];
 #[inline]
 fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>, Error> {
     // there isn't a real timezone PST etc.. so doing a common mapping for ease of use.
-    let tz = match tz {
-        "PST" => "America/Vancouver",
-        "CST" => "America/Winnipeg",
+    let tz = match tz.to_lowercase().as_str() {
+        "pst" => "America/Vancouver",
+        "cst" => "America/Winnipeg",
         _ => tz,
     };
     match Tz::from_str(tz) {
@@ -226,8 +225,8 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
 
 #[inline]
 fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
-    where
-        W: Write,
+where
+    W: Write,
 {
     json::write_items(writer, &items[..])
         .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
@@ -247,6 +246,10 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
     let rfc_3339 = build_item(
         dt.to_rfc3339_opts(SecondsFormat::Secs, false),
         "rfc_3339 - iso8601 compatible",
+    );
+    let rfc_3339_nano = build_item(
+        dt.to_rfc3339_opts(SecondsFormat::Nanos, true),
+        "rfc_3339_nano - iso8601 compatible",
     );
     let rfc_2822 = build_item(dt.to_rfc2822(), "rfc_2822");
     let alt = build_item(dt.format("%e %b %Y %H:%M:%S").to_string(), "");
@@ -270,20 +273,28 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
         diff.num_seconds().abs() % 60,
         attr
     );
-    let time_since = build_item(
-        diff_str,
-        decor,
-    );
+    let time_since = build_item(diff_str, decor);
 
     let time_current_tz = build_item(
-        dt.with_timezone(&Local).format("%e %b %Y %H:%M:%S").to_string(),
+        dt.with_timezone(&Local)
+            .format("%e %b %Y %H:%M:%S")
+            .to_string(),
         "Time in local timezone",
     );
 
-
     write_items(
         io::stdout(),
-        &[unix_sec, unix_milli, unix_nano, alt, time_current_tz, rfc_2822, rfc_3339, time_since],
+        &[
+            unix_sec,
+            unix_milli,
+            unix_nano,
+            alt,
+            time_current_tz,
+            rfc_2822,
+            rfc_3339,
+            rfc_3339_nano,
+            time_since,
+        ],
     )
 }
 
