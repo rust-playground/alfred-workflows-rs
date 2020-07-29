@@ -20,14 +20,15 @@ path = "src/bin/main.rs"
 
 [dependencies]
 alfred = "4.0.2"
-clap = "2.33.0"
-dirs = "2.0.2"
-failure = "0.1.6"
-serde_json = "1.0.41"
+clap = "2.33.1"
+dirs = "3.0.1"
+serde_json = "1.0.57"
+thiserror = "1.0.20"
+anyhow = "1.0.32"
 
 [dependencies.chrono]
 features = ["serde"]
-version = "0.4.9"
+version = "0.4.13"
 
 [dependencies.reqwest]
 features = ["rustls-tls"]
@@ -42,7 +43,7 @@ version = "0.20.0"
 
 [dependencies.serde]
 features = ["derive"]
-version = "1.0.102"
+version = "1.0.114"
 
 [lib]
 name = "github_workflow_lib"

@@ -1,6 +1,6 @@
 use crate::database::models::Repository;
+use crate::errors::Error;
 use chrono::{DateTime, Utc};
-use failure::Error;
 use reqwest::header::CONTENT_TYPE;
 
 #[derive(Debug)]
@@ -47,7 +47,7 @@ impl<'a> GitHubAPI<'a> {
         );
 
         // TODO: clean this up with a proper type that will escape automatically when serialized to JSON
-        let mut escaped = query.to_string();
+        let mut escaped = query;
         escaped = escaped.replace("\n", "\\n");
         escaped = escaped.replace("\"", "\\\"");
 

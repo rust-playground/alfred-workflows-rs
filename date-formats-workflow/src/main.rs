@@ -1,4 +1,7 @@
+mod errors;
+
 use alfred::{json, Item};
+use anyhow::Error as AnyError;
 use chrono::prelude::*;
 use chrono::{Local, Utc};
 use chrono_tz::Tz;
@@ -6,8 +9,7 @@ use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
 };
-use failure::_core::num::ParseIntError;
-use failure::{format_err, Error};
+use errors::Error;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
@@ -17,7 +19,7 @@ const SUBCOMMAND_PRINT: &str = "print";
 const ARG_TIMEZONE: &str = "tz";
 const ARG_VALUE: &str = "value";
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<(), AnyError> {
     let matches = app_from_crate!("\n")
         .setting(AppSettings::AllowExternalSubcommands)
         .arg(
@@ -96,7 +98,7 @@ fn main() -> Result<(), Error> {
                 .autocomplete(format!(" {} ", SUBCOMMAND_NOW))
                 .arg(format!("{} --{} UTC", SUBCOMMAND_NOW, ARG_TIMEZONE))
                 .into_item();
-            write_items(io::stdout(), &[now])
+            Ok(write_items(io::stdout(), &[now])?)
         }
     }
 }
@@ -113,10 +115,9 @@ fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>
         "cst" => "America/Winnipeg",
         _ => tz,
     };
-    match Tz::from_str(tz) {
-        Ok(tz) => Ok(tz.from_utc_datetime(ndt)),
-        Err(e) => Err(format_err!("{}", e)),
-    }
+    Tz::from_str(tz)
+        .map_err(|e| Error::Text(e))
+        .map(|tz| tz.from_utc_datetime(ndt))
 }
 
 struct UnixExtract {
@@ -125,7 +126,7 @@ struct UnixExtract {
 }
 
 #[inline]
-fn parse_seconds_ns(dt: &str) -> Result<UnixExtract, ParseIntError> {
+fn parse_seconds_ns(dt: &str) -> Result<UnixExtract, Error> {
     let num = dt.parse::<i64>()?;
     let ns = num % 1_000_000_000;
     Ok(UnixExtract {
@@ -139,26 +140,19 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
     let time = match dt.len() {
         10 => {
             // unix timestamp - seconds
-            match dt.parse() {
-                Ok(num) => Ok(NaiveDateTime::from_timestamp(num, 0)),
-                Err(e) => Err(format_err!("{}", e)),
-            }
+            Ok(NaiveDateTime::from_timestamp(dt.parse::<i64>()?, 0))
         }
         13 => {
             // unix timestamp - milliseconds
-            match parse_seconds_ns(dt) {
-                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
-                Err(e) => Err(format_err!("{}", e)),
-            }
+            let u = parse_seconds_ns(dt)?;
+            Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns))
         }
         19 => {
             // unix timestamp - nanoseconds
-            match parse_seconds_ns(dt) {
-                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
-                Err(e) => Err(format_err!("{}", e)),
-            }
+            let u = parse_seconds_ns(dt)?;
+            Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns))
         }
-        _ => Err(format_err!("failed to parse DateTime from unix timestamp")),
+        _ => Err(Error::UnixTimestamp),
     };
 
     // try to unwrap the common date & times
@@ -170,7 +164,7 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
                 Ok(v) => Ok(v.naive_utc()),
                 Err(_) => match DateTime::parse_from_rfc2822(&dt) {
                     Ok(v) => Ok(v.naive_utc()),
-                    Err(e) => Err(e),
+                    Err(_) => Err(Error::ParseDateTime),
                 },
             },
         },
@@ -185,7 +179,7 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
                 .find_map(Result::ok);
             match result {
                 Some(v) => Ok(v.naive_utc()),
-                None => Err(format_err!("failed to parse DateTime")),
+                None => Err(Error::ParseDateTime),
             }
         }
     };
@@ -199,7 +193,7 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
                 .find_map(Result::ok);
             match result {
                 Some(v) => Ok(v.naive_utc()),
-                None => Err(format_err!("failed to parse DateTime")),
+                None => Err(Error::ParseDateTime),
             }
         }
     };
@@ -216,7 +210,7 @@ fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
                     v,
                     NaiveTime::from_num_seconds_from_midnight(0, 0),
                 )),
-                None => Err(format_err!("failed to parse DateTime")),
+                None => Err(Error::ParseDateTime),
             }
         }
     }?;
@@ -228,8 +222,7 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, &items[..])
-        .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
+    Ok(json::write_items(writer, &items[..])?)
 }
 
 #[inline]

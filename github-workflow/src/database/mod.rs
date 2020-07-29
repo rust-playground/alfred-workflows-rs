@@ -1,7 +1,8 @@
+pub mod errors;
 pub mod models;
 
 use crate::database::models::Repository;
-use failure::{format_err, Error};
+use errors::Error;
 use rusqlite::{Connection, ToSql, NO_PARAMS};
 
 pub struct DbContext {
@@ -49,7 +50,7 @@ impl DbContext {
                 .join("%")
         );
 
-        let results = self.conn.prepare(
+        self.conn.prepare(
             "SELECT name_with_owner, name, url, pushed_at FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT ?",
         )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
             Ok(Repository{
@@ -59,12 +60,8 @@ impl DbContext {
                 pushed_at:row.get(3)?,
             })
         })?.map(|r|{
-            match r{
-                Ok(v) => Ok(v),
-                Err(e)=> Err(format_err!("Query + Transform into Repository failed: {}",e)),
-            }
-        }).collect::<Result<Vec<_>, _>>();
-        results
+            Ok(r?)
+        }).collect::<Result<Vec<_>, _>>()
     }
 
     #[inline]
