@@ -11,9 +11,9 @@ keywords = ["alfred", "workflow"]
 categories = ["development-tools"]
 
 [dependencies]
-alfred = "4.0.1"
-dirs = "2.0.2"
-failure = "0.1.5"
+alfred = "4.0.2"
+dirs = "3.0.1"
+failure = "0.1.8"
 
 [dependencies.rusqlite]
 features = [
