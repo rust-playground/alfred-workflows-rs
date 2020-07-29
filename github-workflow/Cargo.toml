@@ -31,8 +31,8 @@ features = ["serde"]
 version = "0.4.13"
 
 [dependencies.reqwest]
-features = ["rustls-tls"]
-version = "0.9.22"
+features = ["rustls-tls","blocking", "json"]
+version = "0.10.7"
 
 [dependencies.rusqlite]
 features = [

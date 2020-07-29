@@ -55,7 +55,7 @@ impl<'a> GitHubAPI<'a> {
         q.push_str(&escaped);
         q.push_str("\" }");
 
-        let results: Results = reqwest::Client::new()
+        let results: Results = reqwest::blocking::Client::new()
             .post("https://api.github.com/graphql")
             .bearer_auth(self.token)
             .header(CONTENT_TYPE, "application/json")
