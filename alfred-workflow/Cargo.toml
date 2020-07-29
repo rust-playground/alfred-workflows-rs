@@ -14,4 +14,9 @@ categories = ["development-tools"]
 alfred = "4.0.1"
 dirs = "2.0.2"
 failure = "0.1.5"
-rusqlite = {version = "0.20.0",features = ["chrono", "bundled"]}
+
+[dependencies.rusqlite]
+features = [
+    "bundled-full",
+]
+version = "0.23.1"
