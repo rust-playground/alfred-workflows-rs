@@ -104,7 +104,11 @@ fn main() -> Result<(), AnyError> {
 }
 
 const DATE_TIME_PARSE_FORMATS: &[&str] = &["%Y-%m-%d %H:%M:%S %z"];
-const UTC_DATE_TIME_PARSE_FORMATS: &[&str] = &["%Y-%m-%d %H:%M:%S", "%a %b %e %T %Y"];
+const UTC_DATE_TIME_PARSE_FORMATS: &[&str] = &[
+    "%Y-%m-%d %H:%M:%S%.f",
+    "%Y-%m-%d %H:%M:%S",
+    "%a %b %e %T %Y",
+];
 const NAIVE_DATE_PARSE_FORMATS: &[&str] = &["%Y-%m-%d"];
 
 #[inline]
@@ -136,23 +140,32 @@ fn parse_seconds_ns(dt: &str) -> Result<UnixExtract, Error> {
 }
 
 fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
+    // panic!(dt.to_owned());
+
     // check lengths and try to parse unix timestamps first
-    let time = match dt.len() {
+    let time: Result<NaiveDateTime, Box<dyn std::error::Error>> = match dt.len() {
         10 => {
             // unix timestamp - seconds
-            Ok(NaiveDateTime::from_timestamp(dt.parse::<i64>()?, 0))
+            match dt.parse::<i64>() {
+                Ok(u) => Ok(NaiveDateTime::from_timestamp(u, 0)),
+                Err(e) => Err(Box::new(e)),
+            }
         }
         13 => {
             // unix timestamp - milliseconds
-            let u = parse_seconds_ns(dt)?;
-            Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns))
+            match parse_seconds_ns(dt) {
+                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
+                Err(e) => Err(Box::new(e)),
+            }
         }
         19 => {
             // unix timestamp - nanoseconds
-            let u = parse_seconds_ns(dt)?;
-            Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns))
+            match parse_seconds_ns(dt) {
+                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
+                Err(e) => Err(Box::new(e)),
+            }
         }
-        _ => Err(Error::UnixTimestamp),
+        _ => Err(Box::new(Error::UnixTimestamp)),
     };
 
     // try to unwrap the common date & times
