@@ -1,7 +1,7 @@
 use crate::database::models::Repository;
 use crate::errors::Error;
 use chrono::{DateTime, Utc};
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 
 #[derive(Debug)]
 pub struct GitHubAPI<'a> {
@@ -59,6 +59,7 @@ impl<'a> GitHubAPI<'a> {
             .post("https://api.github.com/graphql")
             .bearer_auth(self.token)
             .header(CONTENT_TYPE, "application/json")
+            .header(USER_AGENT, "Alfred Github Workflow")
             .body(q)
             .send()?
             .json()?;

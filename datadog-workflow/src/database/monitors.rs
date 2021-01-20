@@ -1,6 +1,6 @@
+use crate::database::errors::Error;
 use crate::database::models::{InsertMonitor, Monitor};
 use crate::database::DbContext;
-use failure::{format_err, Error};
 use rusqlite::{ToSql, NO_PARAMS};
 
 pub struct Monitors<'a> {
@@ -15,37 +15,24 @@ impl<'a> Monitors<'a> {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<(), Error> {
-        self.db.conn.execute(
+        self.db.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS monitors (
                 id          INTEGER  NOT NULL PRIMARY KEY,
                 name        TEXT     NOT NULL,
                 url         TEXT     NOT NULL,
                 modified    DATETIME NOT NULL
-            );",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_monitors_name_modified ON monitors (name, modified);",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE TABLE IF NOT EXISTS monitor_tags (
+            );
+            CREATE INDEX IF NOT EXISTS idx_monitors_name_modified ON monitors (name, modified);
+            CREATE TABLE IF NOT EXISTS monitor_tags (
                 id          INTEGER NOT NULL,
                 name        TEXT    NOT NULL,
                 CONSTRAINT fk_monitors
                 FOREIGN KEY (id)
                 REFERENCES monitors(id)
                 ON DELETE CASCADE
-            );",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_monitor_tags_id ON monitor_tags (id);",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_monitor_tags_name ON monitor_tags (name);",
-            NO_PARAMS,
+            );
+            CREATE INDEX IF NOT EXISTS idx_monitor_tags_id ON monitor_tags (id);
+            CREATE INDEX IF NOT EXISTS idx_monitor_tags_name ON monitor_tags (name);",
         )?;
         Ok(())
     }
@@ -130,10 +117,7 @@ impl<'a> Monitors<'a> {
                     modified: row.get(3)?,
                 })
             })?
-            .map(|r| match r {
-                Ok(v) => Ok(v),
-                Err(e) => Err(format_err!("Query + Transform into Monitor failed: {}", e)),
-            })
+            .map(|r| Ok(r?))
             .collect::<Result<Vec<_>, _>>()
     }
 }

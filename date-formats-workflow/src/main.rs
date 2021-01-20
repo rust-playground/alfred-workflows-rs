@@ -116,7 +116,7 @@ fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>
         _ => tz,
     };
     Tz::from_str(tz)
-        .map_err(|e| Error::Text(e))
+        .map_err(Error::Text)
         .map(|tz| tz.from_utc_datetime(ndt))
 }
 
@@ -237,7 +237,7 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
         "UNIX timestamp - nanoseconds",
     );
     let rfc_3339 = build_item(
-        dt.to_rfc3339_opts(SecondsFormat::Secs, false),
+        dt.to_rfc3339_opts(SecondsFormat::Secs, true),
         "rfc_3339 - iso8601 compatible",
     );
     let rfc_3339_nano = build_item(

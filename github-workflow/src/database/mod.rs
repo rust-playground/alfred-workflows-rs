@@ -18,14 +18,13 @@ impl DbContext {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<(), Error> {
-        self.conn.execute(
+        self.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS repositories (
                     name_with_owner TEXT     NOT NULL PRIMARY KEY,
                     name            TEXT     NOT NULL,
                     url             TEXT     NOT NULL,
                     pushed_at       DATETIME NOT NULL
                 );",
-            NO_PARAMS,
         )?;
         Ok(())
     }

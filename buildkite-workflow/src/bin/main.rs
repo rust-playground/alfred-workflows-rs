@@ -1,6 +1,6 @@
 use alfred::{json, Item};
+use anyhow::Error;
 use buildkite_workflow_lib::workflow::BuildkiteWorkflow;
-use std::error::Error;
 use std::io::Write;
 use std::process::Command;
 use std::{env, io};
@@ -14,7 +14,7 @@ struct Opt {
     args: Vec<String>,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Error> {
     let opt = Opt::from_args();
 
     let api_key = env::var("API_KEY")?;
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Box<dyn Error>>
+fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {

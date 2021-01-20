@@ -1,7 +1,7 @@
 //! This contains common abstractions for reuse in multiple workflows
 //!
 use alfred::{json, Item};
-use failure::{format_err, Error};
+use anyhow::{anyhow, Error};
 use rusqlite::Connection;
 use std::{fs, io::Write};
 
@@ -17,7 +17,7 @@ use std::{fs, io::Write};
 /// # Examples
 ///
 /// ```
-/// use failure::Error;
+/// use anyhow::Error;
 /// use rusqlite::Connection;
 /// use rusqlite::NO_PARAMS;
 ///
@@ -43,7 +43,7 @@ where
 {
     let conn: Connection;
     let path = dirs::home_dir()
-        .ok_or_else(|| format_err!("Impossible to get your home dir!"))?
+        .ok_or_else(|| anyhow!("Impossible to get your home dir!"))?
         .join(".alfred")
         .join("workflows")
         .join(name);
@@ -69,7 +69,7 @@ where
 /// ```
 /// use alfred::{json, Item};
 /// use std::{io, io::Write};
-/// use failure::Error;
+/// use anyhow::Error;
 ///
 /// fn main() -> Result<(), Error> {
 ///     let item = alfred::ItemBuilder::new("settings")
@@ -83,5 +83,5 @@ where
     W: Write,
 {
     json::write_items(writer, &items[..])
-        .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
+        .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
 }

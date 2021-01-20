@@ -1,6 +1,6 @@
+use crate::database::errors::Error;
 use crate::database::models::{InsertScreenBoard, ScreenBoard};
 use crate::database::DbContext;
-use failure::{format_err, Error};
 use rusqlite::{ToSql, NO_PARAMS};
 
 pub struct Screenboards<'a> {
@@ -15,19 +15,15 @@ impl<'a> Screenboards<'a> {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<(), Error> {
-        self.db.conn.execute(
+        self.db.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS screenboards (
                 id          INTEGER  NOT NULL PRIMARY KEY,
                 title       TEXT     NOT NULL,
                 description TEXT     NOT NULL,
                 url         TEXT     NOT NULL,
                 modified    DATETIME NOT NULL
-            );",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_screenboards_title_modified ON screenboards (title, modified);",
-            NO_PARAMS,
+            );
+            CREATE INDEX IF NOT EXISTS idx_screenboards_title_modified ON screenboards (title, modified);",
         )?;
         Ok(())
     }
@@ -89,10 +85,7 @@ impl<'a> Screenboards<'a> {
                 modified:row.get(4)?,
             })
         })?.map(|r|{
-            match r{
-                Ok(v) => Ok(v),
-                Err(e)=> Err(format_err!("Query + Transform into ScreenBoard failed: {}",e)),
-            }
+            Ok(r?)
         }).collect::<Result<Vec<_>, _>>()
     }
 }

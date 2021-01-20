@@ -1,7 +1,7 @@
 use crate::database::DbContext;
 use crate::datadog::DatadogAPI;
+use crate::errors::Error;
 use alfred::Item;
-use failure::Error;
 use std::str;
 
 pub struct DatadogWorkflow<'a> {
@@ -44,7 +44,7 @@ impl<'a> DatadogWorkflow<'a> {
         self.refresh_monitors(&datadog_api)?;
 
         // and DB cleanup work
-        self.db.optimize()
+        Ok(self.db.optimize()?)
     }
 
     fn refresh_timeboards(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {

@@ -1,8 +1,8 @@
 use crate::buildkite_api::BuildkiteAPI;
 use crate::database::models::Pipeline;
 use crate::database::DbContext;
+use crate::errors::Error;
 use alfred::Item;
-use std::error::Error;
 
 pub struct BuildkiteWorkflow<'a> {
     api_key: &'a str,
@@ -11,18 +11,16 @@ pub struct BuildkiteWorkflow<'a> {
 
 impl<'a> BuildkiteWorkflow<'a> {
     #[inline]
-    pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
         let db = DbContext::new(database_url)?;
         Ok(BuildkiteWorkflow { api_key, db })
     }
 
     #[inline]
-    pub fn refresh_cache(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn refresh_cache(&mut self) -> Result<(), Error> {
         self.db.run_migrations()?;
         let api = BuildkiteAPI::new(self.api_key);
-
         self.db.delete_pipelines()?;
-
         for organizations in api.get_organizations_paginated() {
             for org in organizations? {
                 for pipelines in api.get_pipelines_paginated(&org.slug) {
@@ -44,7 +42,7 @@ impl<'a> BuildkiteWorkflow<'a> {
     }
 
     #[inline]
-    pub fn query<'items>(&self, repo_name: &[String]) -> Result<Vec<Item<'items>>, Box<dyn Error>> {
+    pub fn query<'items>(&self, repo_name: &[String]) -> Result<Vec<Item<'items>>, Error> {
         self.db
             .find_pipelines(repo_name, 10)?
             .into_iter()

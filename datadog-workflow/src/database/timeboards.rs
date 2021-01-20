@@ -1,6 +1,6 @@
+use crate::database::errors::Error;
 use crate::database::models::{InsertTimeBoard, TimeBoard};
 use crate::database::DbContext;
-use failure::{format_err, Error};
 use rusqlite::{ToSql, NO_PARAMS};
 
 pub struct Timeboards<'a> {
@@ -15,19 +15,15 @@ impl<'a> Timeboards<'a> {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<(), Error> {
-        self.db.conn.execute(
+        self.db.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS timeboards (
                 id          TEXT     NOT NULL PRIMARY KEY,
                 title       TEXT     NOT NULL,
                 description TEXT     NOT NULL,
                 url         TEXT     NOT NULL,
                 modified    DATETIME NOT NULL
-            );",
-            NO_PARAMS,
-        )?;
-        self.db.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_timeboards_title_modified ON timeboards (title, modified);",
-            NO_PARAMS,
+            );
+            CREATE INDEX IF NOT EXISTS idx_timeboards_title_modified ON timeboards (title, modified);",
         )?;
         Ok(())
     }
@@ -76,7 +72,7 @@ impl<'a> Timeboards<'a> {
                 .join("%")
         );
 
-        let results = self.db.conn.prepare(
+        self.db.conn.prepare(
             "SELECT id, title, description, url, modified FROM timeboards WHERE title LIKE ? ORDER BY modified DESC LIMIT ?",
         )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
             Ok(TimeBoard {
@@ -87,11 +83,7 @@ impl<'a> Timeboards<'a> {
                 modified:row.get(4)?,
             })
         })?.map(|r|{
-            match r{
-                Ok(v) => Ok(v),
-                Err(e)=> Err(format_err!("Query + Transform into Repository failed: {}",e)),
-            }
-        }).collect::<Result<Vec<_>, _>>();
-        results
+            Ok(r?)
+        }).collect::<Result<Vec<_>, _>>()
     }
 }
