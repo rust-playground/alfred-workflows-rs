@@ -124,48 +124,31 @@ fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>
         .map(|tz| tz.from_utc_datetime(ndt))
 }
 
-struct UnixExtract {
-    seconds: i64,
-    ns: u32,
-}
-
-#[inline]
-fn parse_seconds_ns(dt: &str) -> Result<UnixExtract, Error> {
-    let num = dt.parse::<i64>()?;
-    let ns = num % 1_000_000_000;
-    Ok(UnixExtract {
-        seconds: (num - ns) / 1_000_000_000,
-        ns: ns as u32,
-    })
-}
-
 fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
-    // panic!(dt.to_owned());
-
-    // check lengths and try to parse unix timestamps first
-    let time: Result<NaiveDateTime, Box<dyn std::error::Error>> = match dt.len() {
+    // check lengths and try to parse unix timestamps first as a potential fast path
+    let time: Result<NaiveDateTime, Error> = match dt.len() {
         10 => {
             // unix timestamp - seconds
             match dt.parse::<i64>() {
                 Ok(u) => Ok(NaiveDateTime::from_timestamp(u, 0)),
-                Err(e) => Err(Box::new(e)),
+                Err(e) => Err(e.into()),
             }
         }
         13 => {
             // unix timestamp - milliseconds
-            match parse_seconds_ns(dt) {
-                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
-                Err(e) => Err(Box::new(e)),
+            match dt.parse::<i64>() {
+                Ok(u) => Ok(Utc.timestamp_nanos(u * 1_000_000).naive_utc()),
+                Err(e) => Err(e.into()),
             }
         }
         19 => {
             // unix timestamp - nanoseconds
-            match parse_seconds_ns(dt) {
-                Ok(u) => Ok(NaiveDateTime::from_timestamp(u.seconds, u.ns)),
-                Err(e) => Err(Box::new(e)),
+            match dt.parse::<i64>() {
+                Ok(u) => Ok(Utc.timestamp_nanos(u).naive_utc()),
+                Err(e) => Err(e.into()),
             }
         }
-        _ => Err(Box::new(Error::UnixTimestamp)),
+        _ => Err(Error::UnixTimestamp),
     };
 
     // try to unwrap the common date & times
