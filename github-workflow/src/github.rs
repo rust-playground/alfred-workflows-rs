@@ -1,7 +1,7 @@
 use crate::database::models::Repository;
+use crate::errors::Error;
 use chrono::{DateTime, Utc};
-use failure::Error;
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 
 #[derive(Debug)]
 pub struct GitHubAPI<'a> {
@@ -47,7 +47,7 @@ impl<'a> GitHubAPI<'a> {
         );
 
         // TODO: clean this up with a proper type that will escape automatically when serialized to JSON
-        let mut escaped = query.to_string();
+        let mut escaped = query;
         escaped = escaped.replace("\n", "\\n");
         escaped = escaped.replace("\"", "\\\"");
 
@@ -55,10 +55,11 @@ impl<'a> GitHubAPI<'a> {
         q.push_str(&escaped);
         q.push_str("\" }");
 
-        let results: Results = reqwest::Client::new()
+        let results: Results = reqwest::blocking::Client::new()
             .post("https://api.github.com/graphql")
             .bearer_auth(self.token)
             .header(CONTENT_TYPE, "application/json")
+            .header(USER_AGENT, "Alfred Github Workflow")
             .body(q)
             .send()?
             .json()?;

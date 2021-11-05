@@ -1,9 +1,9 @@
 use alfred::{json, Item};
+use anyhow::{anyhow, Error};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand,
 };
 use datadog_workflow_lib::workflow::DatadogWorkflow;
-use failure::{format_err, Error};
 use std::io::Write;
 use std::{env, io, process::Command};
 
@@ -146,7 +146,7 @@ fn main() -> Result<(), Error> {
                 println!("Successfully Refreshed Datadog cache");
                 Ok(())
             }
-            _ => Err(format_err!("No suitable SubCommand found")),
+            _ => Err(anyhow!("No suitable SubCommand found")),
         },
         (SUBCOMMAND_OPEN, Some(m)) => {
             let input = m.value_of(ARG_INPUT).unwrap_or_default();
@@ -154,7 +154,7 @@ fn main() -> Result<(), Error> {
                 Command::new("open")
                     .arg(input)
                     .output()
-                    .map_err(|e| format_err!("failed to execute process: {}", e))?;
+                    .map_err(|e| anyhow!("failed to execute process: {}", e))?;
             }
             Ok(())
         }
@@ -173,5 +173,5 @@ where
     W: Write,
 {
     json::write_items(writer, &items[..])
-        .map_err(|e| format_err!("failed to write alfred items->json: {}", e))
+        .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
 }

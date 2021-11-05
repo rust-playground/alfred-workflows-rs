@@ -3,7 +3,7 @@ pub mod models;
 
 use crate::database::models::Pipeline;
 use errors::Result;
-use rusqlite::{Connection, ToSql, NO_PARAMS};
+use rusqlite::{Connection, ToSql};
 
 pub struct DbContext {
     conn: Connection,
@@ -18,20 +18,19 @@ impl DbContext {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<()> {
-        self.conn.execute(
+        self.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS pipelines (
                 unique_name TEXT    NOT NULL PRIMARY KEY,
                 name        TEXT    NOT NULL,
                 url         TEXT    NOT NULL
             );",
-            NO_PARAMS,
         )?;
         Ok(())
     }
 
     #[inline]
     pub fn delete_pipelines(&self) -> Result<()> {
-        self.conn.execute("DELETE FROM pipelines;", NO_PARAMS)?;
+        self.conn.execute("DELETE FROM pipelines;", [])?;
         Ok(())
     }
 
@@ -85,7 +84,7 @@ impl DbContext {
     #[inline]
     pub fn optimize(&self) -> Result<()> {
         // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn.execute("VACUUM;", NO_PARAMS)?;
+        self.conn.execute("VACUUM;", [])?;
         Ok(())
     }
 }

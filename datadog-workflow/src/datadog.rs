@@ -1,6 +1,6 @@
 use crate::database::models::{InsertMonitor, InsertScreenBoard, InsertTimeBoard};
-use failure::Error;
-use reqwest::Client;
+use crate::errors::Error;
+use reqwest::blocking::Client;
 
 const APPLICATION_KEY: &str = "application_key";
 const API_KEY: &str = "api_key";
@@ -27,7 +27,7 @@ impl<'a> DatadogAPI<'a> {
             application_key,
             api_url,
             subdomain,
-            client: reqwest::Client::new(),
+            client: reqwest::blocking::Client::new(),
         }
     }
 

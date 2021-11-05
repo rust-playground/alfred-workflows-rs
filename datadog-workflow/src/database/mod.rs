@@ -1,14 +1,15 @@
+pub mod errors;
 pub mod models;
 pub mod monitors;
 pub mod screenboards;
 pub mod timeboards;
 
+use crate::database::errors::Error;
 use crate::database::models::Dashboard;
 use crate::database::monitors::Monitors;
 use crate::database::screenboards::Screenboards;
 use crate::database::timeboards::Timeboards;
-use failure::{format_err, Error};
-use rusqlite::{Connection, ToSql, NO_PARAMS};
+use rusqlite::{Connection, ToSql};
 
 #[derive(Debug)]
 pub struct DbContext {
@@ -67,10 +68,7 @@ impl DbContext {
                 url: row.get(2)?,
             })
         })?.map(|r|{
-            match r{
-                Ok(v) => Ok(v),
-                Err(e)=> Err(format_err!("Query + Transform into ScreenBoard failed: {}",e)),
-            }
+            Ok(r?)
         }).collect::<Result<Vec<_>, _>>()
     }
 
@@ -85,7 +83,7 @@ impl DbContext {
     #[inline]
     pub fn optimize(&self) -> Result<(), Error> {
         // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn.execute("VACUUM;", NO_PARAMS)?;
+        self.conn.execute("VACUUM;", [])?;
         Ok(())
     }
 }

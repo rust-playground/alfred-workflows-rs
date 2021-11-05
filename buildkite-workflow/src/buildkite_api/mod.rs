@@ -40,43 +40,37 @@ impl<'a> BuildkiteAPI<'a> {
 
     #[inline]
     fn fetch_organizations(&self, url: &str) -> Result<OrganizationResponse> {
-        let mut response = reqwest::Client::new()
+        let response = reqwest::blocking::Client::new()
             .get(url)
             .bearer_auth(self.token)
             .header(CONTENT_TYPE, "application/json")
             .send()?;
 
         if !response.status().is_success() {
-            return Err(Error::HTTP {
-                err: response.text()?,
-            });
+            return Err(Error::Http(response.text()?));
         }
 
-        let results: Vec<Organization> = response.json()?;
         let link = response.headers().get(LINK);
         let next = self.extract_next(link);
-
+        let results: Vec<Organization> = response.json()?;
         Ok(OrganizationResponse { next, results })
     }
 
     #[inline]
     fn fetch_pipelines(&self, url: &str) -> Result<PipelineResponse> {
-        let mut response = reqwest::Client::new()
+        let response = reqwest::blocking::Client::new()
             .get(url)
             .bearer_auth(self.token)
             .header(CONTENT_TYPE, "application/json")
             .send()?;
 
         if !response.status().is_success() {
-            return Err(Error::HTTP {
-                err: response.text()?,
-            });
+            return Err(Error::Http(response.text()?));
         }
 
-        let results: Vec<Pipeline> = response.json()?;
         let link = response.headers().get(LINK);
         let next = self.extract_next(link);
-
+        let results: Vec<Pipeline> = response.json()?;
         Ok(PipelineResponse { next, results })
     }
 
@@ -102,11 +96,7 @@ impl<'a> Iterator for OrganizationsIter<'a> {
     type Item = Result<Vec<Organization>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next.is_none() {
-            return None;
-        }
-
-        let response = self.api.fetch_organizations(&self.next.as_ref().unwrap());
+        let response = self.api.fetch_organizations(self.next.as_ref()?);
         if response.is_err() {
             return Some(Err(response.err().unwrap()));
         }
@@ -130,11 +120,7 @@ impl<'a> Iterator for PipelinesIter<'a> {
     type Item = Result<Vec<Pipeline>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next.is_none() {
-            return None;
-        }
-
-        let response = self.api.fetch_pipelines(&self.next.as_ref().unwrap());
+        let response = self.api.fetch_pipelines(self.next.as_ref()?);
         if response.is_err() {
             return Some(Err(response.err().unwrap()));
         }

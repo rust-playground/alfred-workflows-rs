@@ -1,7 +1,7 @@
 use crate::database::DbContext;
+use crate::errors::Error;
 use crate::github::GitHubAPI;
 use alfred::Item;
-use failure::Error;
 
 pub struct GithubWorkflow<'a> {
     api_key: &'a str,

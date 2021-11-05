@@ -1,8 +1,9 @@
+pub mod errors;
 pub mod models;
 
 use crate::database::models::Repository;
-use failure::{format_err, Error};
-use rusqlite::{Connection, ToSql, NO_PARAMS};
+use errors::Error;
+use rusqlite::{Connection, ToSql};
 
 pub struct DbContext {
     conn: Connection,
@@ -17,21 +18,24 @@ impl DbContext {
 
     #[inline]
     pub fn run_migrations(&self) -> Result<(), Error> {
-        self.conn.execute(
+        self.conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS repositories (
                     name_with_owner TEXT     NOT NULL PRIMARY KEY,
                     name            TEXT     NOT NULL,
                     url             TEXT     NOT NULL,
                     pushed_at       DATETIME NOT NULL
                 );",
-            NO_PARAMS,
         )?;
+        // CREATE VIRTUAL TABLE IF NOT EXISTS repositories_fts4 using fts4(content)
         Ok(())
     }
 
     #[inline]
     pub fn delete_repositories(&self) -> Result<(), Error> {
-        self.conn.execute("DELETE FROM repositories;", NO_PARAMS)?;
+        self.conn.execute_batch(
+            "DELETE FROM repositories;
+                ",
+        )?;
         Ok(())
     }
 
@@ -49,7 +53,9 @@ impl DbContext {
                 .join("%")
         );
 
-        let results = self.conn.prepare(
+        // "SELECT name_with_owner, name, url, pushed_at FROM repositories LEFT JOIN(SELECT content FROM repositories_fts4 WHERE content MATCH ?) ON content = name_with_owner ORDER BY pushed_at DESC LIMIT ?",
+
+        self.conn.prepare(
             "SELECT name_with_owner, name, url, pushed_at FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT ?",
         )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
             Ok(Repository{
@@ -59,12 +65,8 @@ impl DbContext {
                 pushed_at:row.get(3)?,
             })
         })?.map(|r|{
-            match r{
-                Ok(v) => Ok(v),
-                Err(e)=> Err(format_err!("Query + Transform into Repository failed: {}",e)),
-            }
-        }).collect::<Result<Vec<_>, _>>();
-        results
+            Ok(r?)
+        }).collect::<Result<Vec<_>, _>>()
     }
 
     #[inline]
@@ -83,13 +85,24 @@ impl DbContext {
 
         stmt.finalize()?;
         tx.commit()?;
+
+        // let tx = self.conn.transaction()?;
+        // let mut stmt2 = tx.prepare("INSERT INTO repositories_fts4 (content) VALUES (?1)")?;
+
+        // for repo in repositories {
+        //     stmt2.execute(&[&repo.name_with_owner as &dyn ToSql])?;
+        // }
+
+        // stmt2.finalize()?;
+        // tx.commit()?;
+
         Ok(())
     }
 
     #[inline]
     pub fn optimize(&self) -> Result<(), Error> {
         // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn.execute("VACUUM;", NO_PARAMS)?;
+        self.conn.execute("VACUUM;", [])?;
         Ok(())
     }
 }
