@@ -3,7 +3,7 @@ pub mod models;
 
 use crate::database::models::Repository;
 use errors::Error;
-use rusqlite::{Connection, ToSql, NO_PARAMS};
+use rusqlite::{Connection, ToSql};
 
 pub struct DbContext {
     conn: Connection,
@@ -26,12 +26,16 @@ impl DbContext {
                     pushed_at       DATETIME NOT NULL
                 );",
         )?;
+        // CREATE VIRTUAL TABLE IF NOT EXISTS repositories_fts4 using fts4(content)
         Ok(())
     }
 
     #[inline]
     pub fn delete_repositories(&self) -> Result<(), Error> {
-        self.conn.execute("DELETE FROM repositories;", NO_PARAMS)?;
+        self.conn.execute_batch(
+            "DELETE FROM repositories;
+                ",
+        )?;
         Ok(())
     }
 
@@ -48,6 +52,8 @@ impl DbContext {
                 .collect::<Vec<&str>>()
                 .join("%")
         );
+
+        // "SELECT name_with_owner, name, url, pushed_at FROM repositories LEFT JOIN(SELECT content FROM repositories_fts4 WHERE content MATCH ?) ON content = name_with_owner ORDER BY pushed_at DESC LIMIT ?",
 
         self.conn.prepare(
             "SELECT name_with_owner, name, url, pushed_at FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT ?",
@@ -79,13 +85,24 @@ impl DbContext {
 
         stmt.finalize()?;
         tx.commit()?;
+
+        // let tx = self.conn.transaction()?;
+        // let mut stmt2 = tx.prepare("INSERT INTO repositories_fts4 (content) VALUES (?1)")?;
+
+        // for repo in repositories {
+        //     stmt2.execute(&[&repo.name_with_owner as &dyn ToSql])?;
+        // }
+
+        // stmt2.finalize()?;
+        // tx.commit()?;
+
         Ok(())
     }
 
     #[inline]
     pub fn optimize(&self) -> Result<(), Error> {
         // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn.execute("VACUUM;", NO_PARAMS)?;
+        self.conn.execute("VACUUM;", [])?;
         Ok(())
     }
 }

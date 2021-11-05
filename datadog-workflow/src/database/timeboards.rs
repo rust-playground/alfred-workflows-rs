@@ -1,7 +1,7 @@
 use crate::database::errors::Error;
 use crate::database::models::{InsertTimeBoard, TimeBoard};
 use crate::database::DbContext;
-use rusqlite::{ToSql, NO_PARAMS};
+use rusqlite::ToSql;
 
 pub struct Timeboards<'a> {
     db: &'a mut DbContext,
@@ -30,7 +30,7 @@ impl<'a> Timeboards<'a> {
 
     #[inline]
     pub fn delete_all(&self) -> Result<(), Error> {
-        self.db.conn.execute("DELETE FROM timeboards;", NO_PARAMS)?;
+        self.db.conn.execute("DELETE FROM timeboards;", [])?;
         Ok(())
     }
 

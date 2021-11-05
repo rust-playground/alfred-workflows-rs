@@ -9,6 +9,7 @@ use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
 };
+use dateparser::parse;
 use errors::Error;
 use std::io;
 use std::io::Write;
@@ -50,8 +51,8 @@ fn main() -> Result<(), AnyError> {
     match matches.subcommand() {
         (SUBCOMMAND_NOW, Some(m)) => {
             let tz = m.value_of(ARG_TIMEZONE).unwrap(); // safe because there is a default value
-            let now = Utc::now().naive_utc();
-            let dt = parse_timezone_and_date(&now, &tz)?;
+            let now = Utc::now();
+            let dt = parse_timezone_and_date(&now, tz)?;
             write_variations(&dt)?;
             Ok(())
         }
@@ -71,13 +72,11 @@ fn main() -> Result<(), AnyError> {
                 Some(args) => {
                     let mut time_args = Vec::new();
                     let mut iter = args.vals.iter().map(|s| s.to_string_lossy().into_owned());
-                    'outer: while let Some(arg) = iter.next() {
+                    for arg in &mut iter {
                         match arg.as_str() {
                             // some funny business to parse the tz because of accepting
                             // arbitrary text before it
-                            "-t" | "--tz" => {
-                                break 'outer;
-                            }
+                            "-t" | "--tz" => break,
                             _ => time_args.push(arg),
                         }
                     }
@@ -87,7 +86,8 @@ fn main() -> Result<(), AnyError> {
                 None => String::from(""),
             };
             let dt = date.to_owned() + " " + &time;
-            let parsed = parse_datetime(&dt.trim())?;
+
+            let parsed = parse(dt.trim())?;
             let dt = parse_timezone_and_date(&parsed, &tz)?;
             write_variations(&dt)?;
             Ok(())
@@ -103,16 +103,8 @@ fn main() -> Result<(), AnyError> {
     }
 }
 
-const DATE_TIME_PARSE_FORMATS: &[&str] = &["%Y-%m-%d %H:%M:%S %z"];
-const UTC_DATE_TIME_PARSE_FORMATS: &[&str] = &[
-    "%Y-%m-%d %H:%M:%S%.f",
-    "%Y-%m-%d %H:%M:%S",
-    "%a %b %e %T %Y",
-];
-const NAIVE_DATE_PARSE_FORMATS: &[&str] = &["%Y-%m-%d"];
-
 #[inline]
-fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>, Error> {
+fn parse_timezone_and_date(ndt: &DateTime<Utc>, tz: &str) -> Result<DateTime<Tz>, Error> {
     // there isn't a real timezone PST etc.. so doing a common mapping for ease of use.
     let tz = match tz.to_lowercase().as_str() {
         "pst" => "America/Vancouver",
@@ -121,96 +113,7 @@ fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>
     };
     Tz::from_str(tz)
         .map_err(Error::Text)
-        .map(|tz| tz.from_utc_datetime(ndt))
-}
-
-fn parse_datetime(dt: &str) -> Result<NaiveDateTime, Error> {
-    // check lengths and try to parse unix timestamps first as a potential fast path
-    let time: Result<NaiveDateTime, Error> = match dt.len() {
-        10 => {
-            // unix timestamp - seconds
-            match dt.parse::<i64>() {
-                Ok(u) => Ok(NaiveDateTime::from_timestamp(u, 0)),
-                Err(e) => Err(e.into()),
-            }
-        }
-        13 => {
-            // unix timestamp - milliseconds
-            match dt.parse::<i64>() {
-                Ok(u) => Ok(Utc.timestamp_nanos(u * 1_000_000).naive_utc()),
-                Err(e) => Err(e.into()),
-            }
-        }
-        19 => {
-            // unix timestamp - nanoseconds
-            match dt.parse::<i64>() {
-                Ok(u) => Ok(Utc.timestamp_nanos(u).naive_utc()),
-                Err(e) => Err(e.into()),
-            }
-        }
-        _ => Err(Error::UnixTimestamp),
-    };
-
-    // try to unwrap the common date & times
-    let time = match time {
-        Ok(ndt) => Ok(ndt),
-        Err(_) => match dt.parse::<DateTime<Utc>>() {
-            Ok(v) => Ok(v.naive_utc()),
-            Err(_) => match DateTime::parse_from_rfc3339(&dt) {
-                Ok(v) => Ok(v.naive_utc()),
-                Err(_) => match DateTime::parse_from_rfc2822(&dt) {
-                    Ok(v) => Ok(v.naive_utc()),
-                    Err(_) => Err(Error::ParseDateTime),
-                },
-            },
-        },
-    };
-
-    let time = match time {
-        Ok(ndt) => Ok(ndt),
-        Err(_) => {
-            let result = DATE_TIME_PARSE_FORMATS
-                .iter()
-                .map(|fmt| DateTime::parse_from_str(&dt, fmt))
-                .find_map(Result::ok);
-            match result {
-                Some(v) => Ok(v.naive_utc()),
-                None => Err(Error::ParseDateTime),
-            }
-        }
-    };
-
-    let time = match time {
-        Ok(ndt) => Ok(ndt),
-        Err(_) => {
-            let result = UTC_DATE_TIME_PARSE_FORMATS
-                .iter()
-                .map(|fmt| Utc.datetime_from_str(&dt, fmt))
-                .find_map(Result::ok);
-            match result {
-                Some(v) => Ok(v.naive_utc()),
-                None => Err(Error::ParseDateTime),
-            }
-        }
-    };
-
-    let time = match time {
-        Ok(ndt) => Ok(ndt),
-        Err(_) => {
-            let result = NAIVE_DATE_PARSE_FORMATS
-                .iter()
-                .map(|fmt| NaiveDate::parse_from_str(&dt, fmt))
-                .find_map(Result::ok);
-            match result {
-                Some(v) => Ok(NaiveDateTime::new(
-                    v,
-                    NaiveTime::from_num_seconds_from_midnight(0, 0),
-                )),
-                None => Err(Error::ParseDateTime),
-            }
-        }
-    }?;
-    Ok(time)
+        .map(|tz| ndt.with_timezone(&tz))
 }
 
 #[inline]

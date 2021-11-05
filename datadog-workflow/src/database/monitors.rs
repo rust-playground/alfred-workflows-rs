@@ -1,7 +1,7 @@
 use crate::database::errors::Error;
 use crate::database::models::{InsertMonitor, Monitor};
 use crate::database::DbContext;
-use rusqlite::{ToSql, NO_PARAMS};
+use rusqlite::ToSql;
 
 pub struct Monitors<'a> {
     db: &'a mut DbContext,
@@ -39,7 +39,7 @@ impl<'a> Monitors<'a> {
 
     #[inline]
     pub fn delete_all(&self) -> Result<(), Error> {
-        self.db.conn.execute("DELETE FROM monitors;", NO_PARAMS)?;
+        self.db.conn.execute("DELETE FROM monitors;", [])?;
         Ok(())
     }
 
@@ -109,7 +109,7 @@ impl<'a> Monitors<'a> {
         self.db
             .conn
             .prepare(&select)?
-            .query_map(&params, |row| {
+            .query_map(&*params, |row| {
                 Ok(Monitor {
                     id: row.get(0)?,
                     name: row.get(1)?,

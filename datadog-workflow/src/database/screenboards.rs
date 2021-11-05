@@ -1,7 +1,7 @@
 use crate::database::errors::Error;
 use crate::database::models::{InsertScreenBoard, ScreenBoard};
 use crate::database::DbContext;
-use rusqlite::{ToSql, NO_PARAMS};
+use rusqlite::ToSql;
 
 pub struct Screenboards<'a> {
     db: &'a mut DbContext,
@@ -30,9 +30,7 @@ impl<'a> Screenboards<'a> {
 
     #[inline]
     pub fn delete_all(&self) -> Result<(), Error> {
-        self.db
-            .conn
-            .execute("DELETE FROM screenboards;", NO_PARAMS)?;
+        self.db.conn.execute("DELETE FROM screenboards;", [])?;
         Ok(())
     }
 

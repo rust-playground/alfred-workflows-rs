@@ -47,7 +47,7 @@ impl<'a> BuildkiteAPI<'a> {
             .send()?;
 
         if !response.status().is_success() {
-            return Err(Error::HTTP(response.text()?));
+            return Err(Error::Http(response.text()?));
         }
 
         let link = response.headers().get(LINK);
@@ -65,7 +65,7 @@ impl<'a> BuildkiteAPI<'a> {
             .send()?;
 
         if !response.status().is_success() {
-            return Err(Error::HTTP(response.text()?));
+            return Err(Error::Http(response.text()?));
         }
 
         let link = response.headers().get(LINK);
@@ -96,11 +96,7 @@ impl<'a> Iterator for OrganizationsIter<'a> {
     type Item = Result<Vec<Organization>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next.is_none() {
-            return None;
-        }
-
-        let response = self.api.fetch_organizations(&self.next.as_ref().unwrap());
+        let response = self.api.fetch_organizations(self.next.as_ref()?);
         if response.is_err() {
             return Some(Err(response.err().unwrap()));
         }
@@ -124,11 +120,7 @@ impl<'a> Iterator for PipelinesIter<'a> {
     type Item = Result<Vec<Pipeline>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next.is_none() {
-            return None;
-        }
-
-        let response = self.api.fetch_pipelines(&self.next.as_ref().unwrap());
+        let response = self.api.fetch_pipelines(self.next.as_ref()?);
         if response.is_err() {
             return Some(Err(response.err().unwrap()));
         }

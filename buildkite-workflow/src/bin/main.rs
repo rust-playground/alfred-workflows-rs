@@ -68,6 +68,6 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, &items[..])?;
+    json::write_items(writer, items)?;
     Ok(())
 }

@@ -9,7 +9,7 @@ use crate::database::models::Dashboard;
 use crate::database::monitors::Monitors;
 use crate::database::screenboards::Screenboards;
 use crate::database::timeboards::Timeboards;
-use rusqlite::{Connection, ToSql, NO_PARAMS};
+use rusqlite::{Connection, ToSql};
 
 #[derive(Debug)]
 pub struct DbContext {
@@ -83,7 +83,7 @@ impl DbContext {
     #[inline]
     pub fn optimize(&self) -> Result<(), Error> {
         // since this workflow is READ heavy, let's optimize the SQLite indexes and DB
-        self.conn.execute("VACUUM;", NO_PARAMS)?;
+        self.conn.execute("VACUUM;", [])?;
         Ok(())
     }
 }

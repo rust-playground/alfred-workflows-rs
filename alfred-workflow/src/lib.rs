@@ -19,7 +19,6 @@ use std::{fs, io::Write};
 /// ```
 /// use anyhow::Error;
 /// use rusqlite::Connection;
-/// use rusqlite::NO_PARAMS;
 ///
 /// fn main() -> Result<(), Error> {
 ///     let conn = alfred_workflow::open_database_or_else("myworkflow", create_tables)?;
@@ -32,7 +31,7 @@ use std::{fs, io::Write};
 ///             key   TEXT NOT NULL PRIMARY KEY,
 ///             value TEXT NOT NULL
 ///         );",
-///         NO_PARAMS,
+///         [],
 ///     )?;
 ///     Ok(())
 /// }

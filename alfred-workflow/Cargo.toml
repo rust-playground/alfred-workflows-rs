@@ -12,11 +12,11 @@ categories = ["development-tools"]
 
 [dependencies]
 alfred = "4.0.2"
-dirs = "3.0.1"
-anyhow = "1.0.32"
+dirs = "4.0.0"
+anyhow = "1.0.44"
 
 [dependencies.rusqlite]
 features = [
     "bundled-full",
 ]
-version = "0.23.1"
+version = "0.26.1"
