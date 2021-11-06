@@ -9,7 +9,6 @@ use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
     SubCommand,
 };
-use dateparser::parse;
 use errors::Error;
 use std::io;
 use std::io::Write;
@@ -52,7 +51,7 @@ fn main() -> Result<(), AnyError> {
         (SUBCOMMAND_NOW, Some(m)) => {
             let tz = m.value_of(ARG_TIMEZONE).unwrap(); // safe because there is a default value
             let now = Utc::now();
-            let dt = parse_timezone_and_date(&now, tz)?;
+            let dt = parse_timezone_and_date(&now.naive_utc(), tz)?;
             write_variations(&dt)?;
             Ok(())
         }
@@ -87,7 +86,7 @@ fn main() -> Result<(), AnyError> {
             };
             let dt = date.to_owned() + " " + &time;
 
-            let parsed = parse(dt.trim())?;
+            let parsed = parse_datetime(dt.trim())?;
             let dt = parse_timezone_and_date(&parsed, &tz)?;
             write_variations(&dt)?;
             Ok(())
@@ -104,7 +103,7 @@ fn main() -> Result<(), AnyError> {
 }
 
 #[inline]
-fn parse_timezone_and_date(ndt: &DateTime<Utc>, tz: &str) -> Result<DateTime<Tz>, Error> {
+fn parse_timezone_and_date(ndt: &NaiveDateTime, tz: &str) -> Result<DateTime<Tz>, Error> {
     // there isn't a real timezone PST etc.. so doing a common mapping for ease of use.
     let tz = match tz.to_lowercase().as_str() {
         "pst" => "America/Vancouver",
@@ -113,7 +112,7 @@ fn parse_timezone_and_date(ndt: &DateTime<Utc>, tz: &str) -> Result<DateTime<Tz>
     };
     Tz::from_str(tz)
         .map_err(Error::Text)
-        .map(|tz| ndt.with_timezone(&tz))
+        .map(|tz| tz.from_utc_datetime(ndt))
 }
 
 #[inline]
@@ -121,7 +120,7 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    Ok(json::write_items(writer, &items[..])?)
+    Ok(json::write_items(writer, items)?)
 }
 
 #[inline]
@@ -199,4 +198,170 @@ fn build_item(date_string: String, subtitle: &str) -> Item {
             SUBCOMMAND_PRINT, ARG_VALUE, date_string
         ))
         .into_item()
+}
+
+const DATE_TIME_WITH_TIMEZONE_PARSE_FORMATS: &[&str] = &[
+    "%Y-%m-%d %H:%M:%S %z",
+    "%Y-%m-%d %H:%M:%S%.f%#z",
+    "%Y-%m-%d %H:%M:%S%#z",
+    "%Y-%m-%d %H:%M%#z",
+];
+const DATE_TIME_WITHOUT_TIMEZONE_PARSE_FORMATS: &[&str] = &[
+    "%Y-%m-%d %H:%M:%S%.f",
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%a %b %e %T %Y",
+    "%Y-%m-%d %I:%M:%S %P",
+    "%Y-%m-%d %I:%M %P",
+    "%m/%d/%y %H:%M:%S",
+    "%m/%d/%y %H:%M",
+    "%m/%d/%y %H:%M:%S%.f",
+    "%m/%d/%y %I:%M:%S %P",
+    "%m/%d/%y %I:%M %P",
+    "%m/%d/%Y %H:%M:%S",
+    "%m/%d/%Y %H:%M",
+    "%m/%d/%Y %H:%M:%S%.f",
+    "%m/%d/%Y %I:%M:%S %P",
+    "%m/%d/%Y %I:%M %P",
+    "%Y/%m/%d %H:%M:%S",
+    "%Y/%m/%d %H:%M",
+    "%Y/%m/%d %H:%M:%S%.f",
+    "%Y/%m/%d %I:%M:%S %P",
+    "%Y/%m/%d %I:%M %P",
+    "%y%m%d %H:%M:%S",
+    "%Y年%m月%d日%H时%M分%S秒",
+];
+
+const DATE_TIME_WITHOUT_TIMEZONE_REPLACE_COMMAS_PARSE_FORMATS: &[&str] = &[
+    "%B %d %Y %H:%M:%S",
+    "%B %d %Y %H:%M",
+    "%B %d %Y %I:%M:%S %P",
+    "%B %d %Y %I:%M %P",
+    "%d %B %Y %H:%M:%S",
+    "%d %B %Y %H:%M",
+    "%d %B %Y %H:%M:%S%.f",
+    "%d %B %Y %I:%M:%S %P",
+    "%d %B %Y %I:%M %P",
+];
+const NAIVE_DATE_PARSE_FORMATS: &[&str] = &[
+    "%Y-%m-%d",
+    "%Y-%b-%d",
+    "%d %B %y",
+    "%d %B %Y",
+    "%m/%d/%y",
+    "%m/%d/%Y",
+    "%Y/%m/%d",
+    "%m.%d.%y",
+    "%m.%d.%Y",
+    "%Y.%m.%d",
+    "%Y年%m月%d日",
+];
+
+const NAIVE_DATE_REPLACE_COMMAS_PARSE_FORMATS: &[&str] = &["%B %d %y", "%B %d %Y"];
+
+#[inline]
+pub fn parse_datetime(s: &str) -> Result<NaiveDateTime, Error> {
+    parse_unix_timestamp(s)
+        .or_else(|_| parse_is08601(s))
+        .or_else(|_| parse_rfc2822(s))
+        .or_else(|_| parse_naive_datetime(s))
+        .or_else(|_| parse_utc_naive_datetime(s))
+        .or_else(|_| parse_utc_naive_datetime_replace_commas(s))
+        .or_else(|_| parse_naive_dates(s))
+        .or_else(|_| parse_naive_dates_replace_commas(s))
+}
+
+fn parse_unix_timestamp(s: &str) -> Result<NaiveDateTime, Error> {
+    match s.len() {
+        10 => {
+            // unix timestamp - seconds
+            match s.parse::<i64>() {
+                Ok(u) => Ok(NaiveDateTime::from_timestamp(u, 0)),
+                Err(e) => Err(e.into()),
+            }
+        }
+        13 => {
+            // unix timestamp - milliseconds
+            match s.parse::<i64>() {
+                Ok(u) => Ok(Utc.timestamp_nanos(u * 1_000_000).naive_utc()),
+                Err(e) => Err(e.into()),
+            }
+        }
+        19 => {
+            // unix timestamp - nanoseconds
+            match s.parse::<i64>() {
+                Ok(u) => Ok(Utc.timestamp_nanos(u).naive_utc()),
+                Err(e) => Err(e.into()),
+            }
+        }
+        _ => Err(Error::UnixTimestamp),
+    }
+}
+
+fn parse_is08601(s: &str) -> Result<NaiveDateTime, Error> {
+    s.parse::<DateTime<Utc>>()
+        .map_or_else(|_| Err(Error::ParseDateTime), |utc| Ok(utc.naive_utc()))
+}
+
+fn parse_rfc2822(s: &str) -> Result<NaiveDateTime, Error> {
+    DateTime::parse_from_rfc2822(s)
+        .map_or_else(|_| Err(Error::ParseDateTime), |dt| Ok(dt.naive_utc()))
+}
+
+fn parse_naive_datetime(s: &str) -> Result<NaiveDateTime, Error> {
+    DATE_TIME_WITH_TIMEZONE_PARSE_FORMATS
+        .iter()
+        .map(|fmt| DateTime::parse_from_str(s, fmt))
+        .find_map(Result::ok)
+        .map_or_else(|| Err(Error::ParseDateTime), |dt| Ok(dt.naive_utc()))
+}
+
+fn parse_utc_naive_datetime(s: &str) -> Result<NaiveDateTime, Error> {
+    DATE_TIME_WITHOUT_TIMEZONE_PARSE_FORMATS
+        .iter()
+        .map(|fmt| Utc.datetime_from_str(s, fmt))
+        .find_map(Result::ok)
+        .map_or_else(|| Err(Error::ParseDateTime), |dt| Ok(dt.naive_utc()))
+}
+
+fn parse_utc_naive_datetime_replace_commas(s: &str) -> Result<NaiveDateTime, Error> {
+    let s = s.replace(", ", " ");
+    DATE_TIME_WITHOUT_TIMEZONE_REPLACE_COMMAS_PARSE_FORMATS
+        .iter()
+        .map(|fmt| Utc.datetime_from_str(&s, fmt))
+        .find_map(Result::ok)
+        .map_or_else(|| Err(Error::ParseDateTime), |dt| Ok(dt.naive_utc()))
+}
+
+fn parse_naive_dates(s: &str) -> Result<NaiveDateTime, Error> {
+    NAIVE_DATE_PARSE_FORMATS
+        .iter()
+        .map(|fmt| NaiveDate::parse_from_str(s, fmt))
+        .find_map(Result::ok)
+        .map_or_else(
+            || Err(Error::ParseDateTime),
+            |dt| {
+                Ok(NaiveDateTime::new(
+                    dt,
+                    NaiveTime::from_num_seconds_from_midnight(0, 0),
+                ))
+            },
+        )
+}
+
+fn parse_naive_dates_replace_commas(s: &str) -> Result<NaiveDateTime, Error> {
+    let s = s.replace(", ", " ");
+    NAIVE_DATE_REPLACE_COMMAS_PARSE_FORMATS
+        .iter()
+        .map(|fmt| NaiveDate::parse_from_str(&s, fmt))
+        .find_map(Result::ok)
+        .map_or_else(
+            || Err(Error::ParseDateTime),
+            |dt| {
+                Ok(NaiveDateTime::new(
+                    dt,
+                    NaiveTime::from_num_seconds_from_midnight(0, 0),
+                ))
+            },
+        )
 }
