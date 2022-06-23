@@ -3,18 +3,26 @@ use crate::errors::Error;
 use crate::github::GitHubAPI;
 use alfred::Item;
 
-pub struct GithubWorkflow<'a> {
+pub struct Workflow<'a> {
     api_key: &'a str,
     db: DbContext,
 }
 
-impl<'a> GithubWorkflow<'a> {
+impl<'a> Workflow<'a> {
+    /// # Errors
+    ///
+    /// Will return `Err` if `database` could not be connected to.
+    ///
     #[inline]
     pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
         let db = DbContext::new(database_url)?;
-        Ok(GithubWorkflow { api_key, db })
+        Ok(Workflow { api_key, db })
     }
 
+    /// # Errors
+    ///
+    /// Will return `Err` if Contacting GitHub returns an error.
+    ///
     #[inline]
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
         self.db.run_migrations()?;
@@ -30,6 +38,10 @@ impl<'a> GithubWorkflow<'a> {
         Ok(())
     }
 
+    /// # Errors
+    ///
+    /// Will return `Err` if querying the database fails.
+    ///
     #[inline]
     pub fn query<'items>(&self, repo_name: &str) -> Result<Vec<Item<'items>>, Error> {
         self.db

@@ -5,7 +5,7 @@ use anyhow::{anyhow, Error};
 use rusqlite::Connection;
 use std::{fs, io::Write};
 
-/// Opens or creates if not exists an SQLite database.
+/// Opens or creates if not exists an `SQLite` database.
 ///
 /// # Arguments
 /// * `name` - The name of the workflow, which will create a dedicated sub-directory for.vec!
@@ -13,6 +13,10 @@ use std::{fs, io::Write};
 ///
 /// # Remarks
 /// `name` must be unique or it may conflict with other workflows.
+///
+/// # Errors
+///
+/// Will return `Err` if connection to database fails
 ///
 /// # Examples
 ///
@@ -48,12 +52,12 @@ where
         .join(name);
 
     let db = path.join("db.sqlite3");
-    if !db.exists() {
+    if db.exists() {
+        conn = Connection::open(&db)?;
+    } else {
         fs::create_dir_all(path)?;
         conn = Connection::open(&db)?;
-        f(&conn)?
-    } else {
-        conn = Connection::open(&db)?
+        f(&conn)?;
     }
     Ok(conn)
 }
@@ -63,6 +67,10 @@ where
 /// # Arguments
 /// * `writer` - the writer to writer iterms to.vec!
 /// * `items` - the Alfred items to be written.vec!
+///
+/// # Errors
+///
+/// Will return `Err` if items cannot be serialized to JSON.
 ///
 /// # Examples
 /// ```
@@ -81,6 +89,6 @@ pub fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, &items[..])
+    json::write_items(writer, items)
         .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
 }

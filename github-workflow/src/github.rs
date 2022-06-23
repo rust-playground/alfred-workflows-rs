@@ -48,8 +48,8 @@ impl<'a> GitHubAPI<'a> {
 
         // TODO: clean this up with a proper type that will escape automatically when serialized to JSON
         let mut escaped = query;
-        escaped = escaped.replace("\n", "\\n");
-        escaped = escaped.replace("\"", "\\\"");
+        escaped = escaped.replace('\n', "\\n");
+        escaped = escaped.replace('\"', "\\\"");
 
         let mut q = String::from("{ \"query\": \"");
         q.push_str(&escaped);
@@ -87,7 +87,7 @@ impl<'a> Iterator for OwnedRepositories<'a> {
             .expect("unable to fetch data from the GitHub API");
         self.has_more = results.data.viewer.repositories.page_info.has_next_page;
         if self.has_more {
-            self.cursor = Some(results.data.viewer.repositories.page_info.end_cursor)
+            self.cursor = Some(results.data.viewer.repositories.page_info.end_cursor);
         }
         Some(
             results
