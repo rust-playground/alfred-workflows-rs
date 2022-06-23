@@ -46,6 +46,7 @@ pub struct Provider {
     pub settings: ProviderSettings,
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProviderSettings {
     pub publish_commit_status: bool,

@@ -1,10 +1,7 @@
 use alfred::{json, Item};
 use anyhow::{anyhow, Error};
-use clap::{
-    app_from_crate, crate_authors, crate_description, crate_name, crate_version, AppSettings, Arg,
-    SubCommand,
-};
-use github_workflow_lib::workflow::GithubWorkflow;
+use clap::{command, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand};
+use github_workflow_lib::workflow::Workflow;
 use std::borrow::Cow;
 use std::io::Write;
 use std::{env, io, process::Command};
@@ -15,14 +12,18 @@ const SUBCOMMAND_OPEN: &str = "open";
 const ARG_INPUT: &str = "input";
 
 fn main() -> Result<(), Error> {
-    let matches = app_from_crate!("\n")
-        .setting(AppSettings::AllowExternalSubcommands)
+    let matches = command!("\n")
+        .author(crate_authors!("\n"))
+        .about(crate_description!())
+        .version(crate_version!())
+        .name(crate_name!())
+        .allow_external_subcommands(true)
         .subcommand(
             SubCommand::with_name(SUBCOMMAND_OPEN)
                 .about("opens the provided argument (https://)")
                 .arg(
                     Arg::with_name(ARG_INPUT)
-                        .long(ARG_INPUT)
+                        // .long(ARG_INPUT)
                         .help("the input value to open")
                         .index(1),
                 ),
@@ -38,18 +39,18 @@ fn main() -> Result<(), Error> {
 
     let api_key = env::var("API_KEY")?;
     let database_url = env::var("DATABASE_URL")?;
-    let mut wf = GithubWorkflow::new(&api_key, &database_url)?;
+    let mut wf = Workflow::new(&api_key, &database_url)?;
 
     match matches.subcommand() {
-        (SUBCOMMAND_SETTINGS, Some(m)) => match m.subcommand() {
-            (SUBCOMMAND_REFRESH, Some(_)) => {
+        Some((SUBCOMMAND_SETTINGS, m)) => match m.subcommand() {
+            Some((SUBCOMMAND_REFRESH, _)) => {
                 wf.refresh_cache()?;
                 println!("Successfully Refreshed GitHub cache");
                 Ok(())
             }
             _ => Err(anyhow!("No suitable SubCommand found")),
         },
-        (SUBCOMMAND_OPEN, Some(m)) => {
+        Some((SUBCOMMAND_OPEN, m)) => {
             let input = m.value_of(ARG_INPUT).unwrap_or_default();
             if input.starts_with("https://") {
                 Command::new("open")
@@ -59,17 +60,31 @@ fn main() -> Result<(), Error> {
             }
             Ok(())
         }
-        (external, Some(m)) => {
-            let query = match m.args.get("") {
-                Some(args) => Cow::Owned(
-                    args.vals
-                        .iter()
-                        .map(|s| s.to_string_lossy().into_owned())
-                        .collect::<Vec<String>>()
-                        .join(" "),
-                ),
+        Some((external, m)) => {
+            let query = match m.get_many("") {
+                Some(args) => args
+                    .into_iter()
+                    .cloned()
+                    .collect::<Vec<String>>()
+                    .join(" ")
+                    .into(),
                 None => Cow::Borrowed(external),
             };
+            // let query: Cow<'a, str> = m
+            //     .get_many::<String>("")
+            //     .map(|vals| vals.collect::<Vec<_>>())
+            //     .unwrap_or_else(|| Cow::Borrowed(external))
+            //     .join(" ");
+            // let query: Vec<&str> = match m.get_many("") {
+            //     Some(args) => Cow::Owned(
+            //         args.vals
+            //             .iter()
+            //             .map(|s| s.to_string_lossy().into_owned())
+            //             .collect::<Vec<String>>()
+            //             .join(" "),
+            //     ),
+            //     None => Cow::Borrowed(external),
+            // };
             let items = wf.query(&query)?;
             write_items(io::stdout(), &items)
         }
@@ -87,6 +102,6 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, &items[..])
+    json::write_items(writer, items)
         .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
 }

@@ -11,4 +11,6 @@ members = [
 # good read - https://lifthrasiir.github.io/rustlog/why-is-a-rust-executable-large.html
 [profile.release]
 lto = true
+strip = true
+codegen-units = 1
 panic = 'abort' # not a normal but a pretty backtrace for panics not really necessary in release build

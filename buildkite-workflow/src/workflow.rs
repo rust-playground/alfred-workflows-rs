@@ -4,18 +4,30 @@ use crate::database::DbContext;
 use crate::errors::Error;
 use alfred::Item;
 
-pub struct BuildkiteWorkflow<'a> {
+pub struct Workflow<'a> {
     api_key: &'a str,
     db: DbContext,
 }
 
-impl<'a> BuildkiteWorkflow<'a> {
+impl<'a> Workflow<'a> {
+    /// Create a new Workflow
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` if database connection fails.
+    ///
     #[inline]
     pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
         let db = DbContext::new(database_url)?;
-        Ok(BuildkiteWorkflow { api_key, db })
+        Ok(Workflow { api_key, db })
     }
 
+    /// Refreshes DB with all Buildkite information.
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` if database connection fails or hitting the `Buildkite` API fails
+    ///
     #[inline]
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
         self.db.run_migrations()?;
@@ -41,6 +53,12 @@ impl<'a> BuildkiteWorkflow<'a> {
         Ok(())
     }
 
+    /// Queries the stored information using the given query.
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` if database connection fails.
+    ///
     #[inline]
     pub fn query<'items>(&self, repo_name: &[String]) -> Result<Vec<Item<'items>>, Error> {
         self.db

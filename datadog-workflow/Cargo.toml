@@ -36,7 +36,7 @@ version = "0.11.6"
 features = [
     "bundled-full",
 ]
-version = "0.26.1"
+version = "0.27.0"
 
 [dependencies.serde]
 features = ["derive"]

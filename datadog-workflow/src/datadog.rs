@@ -5,7 +5,6 @@ use reqwest::blocking::Client;
 const APPLICATION_KEY: &str = "application_key";
 const API_KEY: &str = "api_key";
 
-#[derive(Debug)]
 pub struct DatadogAPI<'a> {
     api_key: &'a str,
     application_key: &'a str,
