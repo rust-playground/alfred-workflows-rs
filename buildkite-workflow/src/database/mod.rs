@@ -12,7 +12,7 @@ pub struct DbContext {
 impl DbContext {
     #[inline]
     pub fn new(database_url: &str) -> Result<Self> {
-        let conn = Connection::open(&database_url)?;
+        let conn = Connection::open(database_url)?;
         Ok(DbContext { conn })
     }
 
@@ -51,7 +51,7 @@ impl DbContext {
 
         let results = self.conn.prepare(
             "SELECT unique_name, name, url FROM pipelines WHERE name LIKE ? ORDER BY name ASC LIMIT ?",
-        )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
+        )?.query_map([&query as &dyn ToSql,&limit], |row| {
             Ok(Pipeline{
                 unique_name: row.get(0)?,
                 name:row.get(1)?,
@@ -69,7 +69,7 @@ impl DbContext {
             tx.prepare("INSERT INTO pipelines (unique_name, name, url) VALUES (?1, ?2, ?3)")?;
 
         for pipeline in pipelines {
-            stmt.execute(&[
+            stmt.execute([
                 &pipeline.unique_name as &dyn ToSql,
                 &pipeline.name,
                 &pipeline.url,

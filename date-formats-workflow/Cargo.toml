@@ -20,10 +20,10 @@ repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master
 version = "1.5.0"
 
 [dependencies]
-alfred = "4.0.2"
+alfred.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+clap.workspace = true
 chrono = "0.4.24"
 chrono-tz = "0.8.2"
-clap = { version = "4.2.4", features = ["derive"] }
-thiserror = "1.0.40"
-anyhow = "1.0.70"
 anydate = "0.3.0"

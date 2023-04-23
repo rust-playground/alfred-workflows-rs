@@ -11,9 +11,9 @@ use std::io;
 use std::io::Write;
 use std::str::FromStr;
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(author, version, about, long_about = None)]
-#[command(propagate_version = true, allow_external_subcommands = true)]
+#[command(propagate_version = true)]
 struct Cli {
     #[arg(global = true, short, long, default_value = "UTC")]
     tz: Option<String>,

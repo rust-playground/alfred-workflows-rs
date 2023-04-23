@@ -12,35 +12,21 @@ license = " MIT"
 name = "datadog-workflow"
 readme = "README.md"
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/datadog-workflow"
-version = "2.1.0"
+version = "2.2.0"
 
 [[bin]]
 name = "datadog-workflow"
 path = "src/bin/main.rs"
 
 [dependencies]
-alfred = "4.0.2"
+alfred.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+rusqlite.workspace = true
 clap = "2.34.0"
-anyhow = "1.0.70"
-thiserror = "1.0.40"
-
-[dependencies.chrono]
-features = ["serde"]
-version = "0.4.24"
-
-[dependencies.reqwest]
-features = ["rustls-tls","blocking", "json"]
-version = "0.11.16"
-
-[dependencies.rusqlite]
-features = [
-    "bundled-full",
-]
-version = "0.27.0"
-
-[dependencies.serde]
-features = ["derive"]
-version = "1.0.160"
+serde = { version = "1.0.160", features = ["derive"] }
+chrono = { version = "0.4.24", features = ["serde"] }
+reqwest = { version = "0.11.16", features = ["rustls-tls","blocking", "json"] }
 
 [lib]
 name = "datadog_workflow_lib"
