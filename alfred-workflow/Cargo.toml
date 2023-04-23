@@ -13,7 +13,7 @@ categories = ["development-tools"]
 [dependencies]
 alfred = "4.0.2"
 dirs = "4.0.0"
-anyhow = "1.0.58"
+anyhow = "1.0.70"
 
 [dependencies.rusqlite]
 features = [

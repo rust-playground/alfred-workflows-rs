@@ -20,17 +20,17 @@ path = "src/bin/main.rs"
 
 [dependencies]
 alfred = "4.0.2"
-clap = "2.33.3"
-anyhow = "1.0.44"
-thiserror = "1.0.30"
+clap = "2.34.0"
+anyhow = "1.0.70"
+thiserror = "1.0.40"
 
 [dependencies.chrono]
 features = ["serde"]
-version = "0.4.19"
+version = "0.4.24"
 
 [dependencies.reqwest]
 features = ["rustls-tls","blocking", "json"]
-version = "0.11.6"
+version = "0.11.16"
 
 [dependencies.rusqlite]
 features = [
@@ -40,7 +40,7 @@ version = "0.27.0"
 
 [dependencies.serde]
 features = ["derive"]
-version = "1.0.130"
+version = "1.0.160"
 
 [lib]
 name = "datadog_workflow_lib"
