@@ -53,42 +53,7 @@ fn main() -> Result<(), Error> {
             }
         }
     };
-
     Ok(())
-
-    // match opt.args.len() {
-    //     0 => {
-    //         let refresh = alfred::ItemBuilder::new(SUBCOMMAND_REFRESH)
-    //             .subtitle("Refresh Cache, be patient you will be notified once complete")
-    //             .arg(SUBCOMMAND_REFRESH)
-    //             .into_item();
-    //         write_items(io::stdout(), &[refresh])?;
-    //     }
-    //     1 => {
-    //         if opt.args.first().expect("a valid argument") == SUBCOMMAND_REFRESH {
-    //             wf.refresh_cache()?;
-    //             println!("Successfully Refreshed Buildkite cache");
-    //         } else {
-    //             let results = wf.query(&opt.args)?;
-    //             write_items(io::stdout(), &results)?;
-    //         }
-    //     }
-    //     2 => {
-    //         if opt.args.first().expect("a valid argument") == SUBCOMMAND_OPEN {
-    //             Command::new("open")
-    //                 .arg(&opt.args.get(1).unwrap())
-    //                 .output()?;
-    //         } else {
-    //             let results = wf.query(&opt.args)?;
-    //             write_items(io::stdout(), &results)?;
-    //         }
-    //     }
-    //     _ => {
-    //         let results = wf.query(&opt.args)?;
-    //         write_items(io::stdout(), &results)?;
-    //     }
-    // }
-    // Ok(())
 }
 
 fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
