@@ -17,13 +17,13 @@ license = "MIT"
 name = "date-formats-workflow"
 readme = "README.md"
 repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/date-formats-workflow"
-version = "1.4.0"
+version = "1.5.0"
 
 [dependencies]
-alfred = "4.0.2"
-chrono = "0.4.19"
-chrono-tz = "0.6.1"
-clap = { version = "3.2.5", features = ["cargo"] }
-thiserror = "1.0.31"
-anyhow = "1.0.58"
+alfred.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+chrono = "0.4.24"
+chrono-tz = "0.8.2"
 anydate = "0.3.0"

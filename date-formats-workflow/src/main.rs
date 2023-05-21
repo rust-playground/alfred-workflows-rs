@@ -5,103 +5,56 @@ use anyhow::Error as AnyError;
 use chrono::prelude::*;
 use chrono::{Local, Utc};
 use chrono_tz::Tz;
-use clap::{command, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand};
+use clap::Parser;
 use errors::Error;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
 
-const SUBCOMMAND_NOW: &str = "now";
-const SUBCOMMAND_PRINT: &str = "print";
-const ARG_TIMEZONE: &str = "tz";
-const ARG_VALUE: &str = "value";
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+#[command(propagate_version = true)]
+struct Cli {
+    #[arg(global = true, short, long, default_value = "UTC")]
+    tz: Option<String>,
+
+    #[arg()]
+    date: Option<Vec<String>>,
+}
+
+const NOW_DT: &str = "now";
 
 fn main() -> Result<(), AnyError> {
-    let matches = command!("\n")
-        .author(crate_authors!("\n"))
-        .about(crate_description!())
-        .version(crate_version!())
-        .name(crate_name!())
-        .allow_external_subcommands(true)
-        .arg(
-            Arg::with_name(ARG_TIMEZONE)
-                .long(ARG_TIMEZONE)
-                .help("the timezone to display the time in eg. America/Vancouver")
-                .short('t')
-                .global(true)
-                .default_value("UTC"),
-        )
-        .subcommand(
-            SubCommand::with_name(SUBCOMMAND_NOW)
-                .about("specifies common date formats for the current time in UTC"),
-        )
-        .subcommand(
-            SubCommand::with_name(SUBCOMMAND_PRINT)
-                .about("prints the provided value")
-                .arg(
-                    Arg::with_name(ARG_VALUE)
-                        .long(ARG_VALUE)
-                        .help("the raw value to print")
-                        .multiple(true)
-                        .takes_value(true),
-                ),
-        )
-        .get_matches();
+    let opts = Cli::parse();
 
-    match matches.subcommand() {
-        Some((SUBCOMMAND_NOW, m)) => {
-            let tz = m.value_of(ARG_TIMEZONE).unwrap(); // safe because there is a default value
+    let tz = opts.tz.unwrap(); // safe because there is a default value
+
+    if let Some(mut date_parts) = opts.date {
+        let date_str = if date_parts.len() == 1 {
+            date_parts.swap_remove(0)
+        } else {
+            date_parts.join(" ")
+        };
+        let date_str = date_str.trim();
+
+        if date_str == NOW_DT {
             let now = Utc::now();
-            let dt = parse_timezone_and_date(&now, tz)?;
+            let dt = parse_timezone_and_date(&now, &tz)?;
             write_variations(&dt)?;
-            Ok(())
-        }
-        Some((SUBCOMMAND_PRINT, m)) => {
-            let values = m
-                .values_of(ARG_VALUE)
-                .unwrap()
-                .collect::<Vec<&str>>()
-                .join(" ");
-            print!("{}", values);
-            Ok(())
-        }
-        Some((date, m)) => {
-            let mut tz = m.value_of(ARG_TIMEZONE).unwrap().to_owned(); // safe because there is a default value
-            let time = match m.get_raw("") {
-                Some(args) => {
-                    let mut time_args = Vec::new();
-                    let mut iter = args;
-                    for arg in iter.by_ref() {
-                        match arg.to_string_lossy().as_ref() {
-                            // some funny business to parse the tz because of accepting
-                            // arbitrary text before it
-                            "-t" | "--tz" => break,
-                            _ => time_args.push(arg.to_string_lossy().to_string()),
-                        }
-                    }
-                    if let Some(new_tz) = iter.next() {
-                        tz = new_tz.to_string_lossy().to_string();
-                    }
-                    time_args.into_iter().collect::<Vec<String>>().join(" ")
-                }
-                None => String::from(""),
-            };
-            let dt = date.to_owned() + " " + &time;
-
-            let parsed = anydate::parse_utc(dt.trim())?;
+        } else {
+            let parsed = anydate::parse_utc(date_str)?;
             let dt = parse_timezone_and_date(&parsed, &tz)?;
             write_variations(&dt)?;
-            Ok(())
         }
-        _ => {
-            let now = alfred::ItemBuilder::new(SUBCOMMAND_NOW)
-                .subtitle("Common date time formats for the current time in UTC.")
-                .autocomplete(format!(" {} ", SUBCOMMAND_NOW))
-                .arg(format!("{} --{} UTC", SUBCOMMAND_NOW, ARG_TIMEZONE))
-                .into_item();
-            Ok(write_items(io::stdout(), &[now])?)
-        }
+    } else {
+        let now = alfred::ItemBuilder::new(NOW_DT)
+            .subtitle("Common date time formats for the current time in UTC.")
+            .autocomplete(format!(" {}", NOW_DT))
+            .arg(format!(" {} --tz {}", &tz, NOW_DT))
+            .into_item();
+        write_items(io::stdout(), &[now])?
     }
+    Ok(())
 }
 
 #[inline]
@@ -193,9 +146,8 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
 
 #[inline]
 fn build_item(date_string: String, subtitle: &str) -> Item {
-    let arg = format!("{} --{} {}", SUBCOMMAND_PRINT, ARG_VALUE, date_string);
-    alfred::ItemBuilder::new(date_string)
+    alfred::ItemBuilder::new(date_string.clone())
         .subtitle(subtitle)
-        .arg(arg)
+        .arg(date_string)
         .into_item()
 }

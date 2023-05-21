@@ -12,7 +12,7 @@ pub struct DbContext {
 impl DbContext {
     #[inline]
     pub fn new(database_url: &str) -> Result<Self, Error> {
-        let conn = Connection::open(&database_url)?;
+        let conn = Connection::open(database_url)?;
         Ok(DbContext { conn })
     }
 
@@ -26,16 +26,12 @@ impl DbContext {
                     pushed_at       DATETIME NOT NULL
                 );",
         )?;
-        // CREATE VIRTUAL TABLE IF NOT EXISTS repositories_fts4 using fts4(content)
         Ok(())
     }
 
     #[inline]
     pub fn delete_repositories(&self) -> Result<(), Error> {
-        self.conn.execute_batch(
-            "DELETE FROM repositories;
-                ",
-        )?;
+        self.conn.execute_batch("DELETE FROM repositories;")?;
         Ok(())
     }
 
@@ -43,7 +39,7 @@ impl DbContext {
     pub fn find_repositories(&self, repo_name: &str, limit: i64) -> Result<Vec<Repository>, Error> {
         // This will allow searching by full name or just the words within the name;
         // it's not a regex but it's good enough.
-        let query = format!(
+        let name = format!(
             "%{}%",
             repo_name
                 .split_terminator(' ')
@@ -53,11 +49,9 @@ impl DbContext {
                 .join("%")
         );
 
-        // "SELECT name_with_owner, name, url, pushed_at FROM repositories LEFT JOIN(SELECT content FROM repositories_fts4 WHERE content MATCH ?) ON content = name_with_owner ORDER BY pushed_at DESC LIMIT ?",
-
         self.conn.prepare(
             "SELECT name_with_owner, name, url, pushed_at FROM repositories WHERE name LIKE ? ORDER BY pushed_at DESC LIMIT ?",
-        )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
+        )?.query_map([&name as &dyn ToSql,&limit], |row| {
             Ok(Repository{
                 name_with_owner: row.get(0)?,
                 name:row.get(1)?,
@@ -75,7 +69,7 @@ impl DbContext {
         let mut stmt = tx.prepare("INSERT INTO repositories (name_with_owner, name, url, pushed_at) VALUES (?1, ?2, ?3, ?4)")?;
 
         for repo in repositories {
-            stmt.execute(&[
+            stmt.execute([
                 &repo.name_with_owner as &dyn ToSql,
                 &repo.name,
                 &repo.url,
@@ -85,16 +79,6 @@ impl DbContext {
 
         stmt.finalize()?;
         tx.commit()?;
-
-        // let tx = self.conn.transaction()?;
-        // let mut stmt2 = tx.prepare("INSERT INTO repositories_fts4 (content) VALUES (?1)")?;
-
-        // for repo in repositories {
-        //     stmt2.execute(&[&repo.name_with_owner as &dyn ToSql])?;
-        // }
-
-        // stmt2.finalize()?;
-        // tx.commit()?;
 
         Ok(())
     }
