@@ -14,4 +14,4 @@ categories = ["development-tools"]
 alfred.workspace = true
 anyhow.workspace = true
 rusqlite.workspace = true
-dirs = "5.0.0"
+dirs = "5.0.1"

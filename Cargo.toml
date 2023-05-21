@@ -9,11 +9,11 @@ members = [
 ]
 
 [workspace.dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 thiserror = "1.0.40"
 alfred = "4.0.2"
 rusqlite = { version = "0.29.0", features = ["bundled-full"]}
-clap = { version = "4.2.4", features = ["derive"] }
+clap = { version = "4.3.0", features = ["derive"] }
 
 # good read - https://lifthrasiir.github.io/rustlog/why-is-a-rust-executable-large.html
 [profile.release]
