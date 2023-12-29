@@ -24,9 +24,9 @@ thiserror.workspace = true
 anyhow.workspace = true
 rusqlite.workspace = true
 clap = "2.34.0"
-serde = { version = "1.0.163", features = ["derive"] }
-chrono = { version = "0.4.24", features = ["serde"] }
-reqwest = { version = "0.11.18", features = ["rustls-tls","blocking", "json"] }
+serde = { version = "1.0.192", features = ["derive"] }
+chrono = { version = "0.4.31", features = ["serde"] }
+reqwest = { version = "0.11.22", features = ["rustls-tls","blocking", "json"] }
 
 [lib]
 name = "datadog_workflow_lib"

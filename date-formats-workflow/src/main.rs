@@ -49,10 +49,10 @@ fn main() -> Result<(), AnyError> {
     } else {
         let now = alfred::ItemBuilder::new(NOW_DT)
             .subtitle("Common date time formats for the current time in UTC.")
-            .autocomplete(format!(" {}", NOW_DT))
-            .arg(format!(" {} --tz {}", &tz, NOW_DT))
+            .autocomplete(format!(" {NOW_DT}"))
+            .arg(format!(" {} --tz {NOW_DT}", &tz))
             .into_item();
-        write_items(io::stdout(), &[now])?
+        write_items(io::stdout(), &[now])?;
     }
     Ok(())
 }
@@ -86,7 +86,7 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
         "UNIX timestamp - milliseconds",
     );
     let unix_nano = build_item(
-        dt.timestamp_nanos().to_string(),
+        dt.timestamp_nanos_opt().unwrap_or_default().to_string(),
         "UNIX timestamp - nanoseconds",
     );
     let rfc_3339 = build_item(

@@ -3,7 +3,7 @@ use anyhow::{anyhow, Error};
 use clap::{
     app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand,
 };
-use datadog_workflow_lib::workflow::DatadogWorkflow;
+use datadog_workflow_lib::workflow::Workflow;
 use std::io::Write;
 use std::{env, io, process::Command};
 
@@ -18,6 +18,7 @@ const ARG_INPUT: &str = "input";
 const ARG_QUERY: &str = "query";
 const ARG_TAG: &str = "tag";
 
+#[allow(clippy::too_many_lines)]
 fn main() -> Result<(), Error> {
     let matches = app_from_crate!("\n")
         .subcommand(
@@ -94,7 +95,7 @@ fn main() -> Result<(), Error> {
     let database_url = env::var("DATABASE_URL")?;
     let api_url = env::var("API_URL")?;
     let subdomain = env::var("SUBDOMAIN")?;
-    let mut wf = DatadogWorkflow::new(
+    let mut wf = Workflow::new(
         &api_key,
         &application_key,
         &database_url,
@@ -161,7 +162,7 @@ fn main() -> Result<(), Error> {
         _ => {
             let refresh = alfred::ItemBuilder::new(SUBCOMMAND_REFRESH)
                 .subtitle("Refresh Cache, be patient you will be notified once complete")
-                .arg(format!("{} {}", SUBCOMMAND_SETTINGS, SUBCOMMAND_REFRESH))
+                .arg(format!("{SUBCOMMAND_SETTINGS} {SUBCOMMAND_REFRESH}"))
                 .into_item();
             write_items(io::stdout(), &[refresh])
         }
@@ -172,6 +173,6 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, &items[..])
+    json::write_items(writer, items)
         .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
 }

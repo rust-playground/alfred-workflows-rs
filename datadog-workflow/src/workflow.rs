@@ -1,10 +1,10 @@
 use crate::database::DbContext;
-use crate::datadog::DatadogAPI;
+use crate::datadog::Api;
 use crate::errors::Error;
 use alfred::Item;
 use std::str;
 
-pub struct DatadogWorkflow<'a> {
+pub struct Workflow<'a> {
     api_key: &'a str,
     application_key: &'a str,
     api_url: &'a str,
@@ -12,7 +12,11 @@ pub struct DatadogWorkflow<'a> {
     subdomain: &'a str,
 }
 
-impl<'a> DatadogWorkflow<'a> {
+impl<'a> Workflow<'a> {
+    /// Creates a new `DataDog` workflow for use.
+    ///
+    /// # Errors
+    /// Can return when database error occurs.
     #[inline]
     pub fn new(
         api_key: &'a str,
@@ -22,17 +26,21 @@ impl<'a> DatadogWorkflow<'a> {
         subdomain: &'a str,
     ) -> Result<Self, Error> {
         let db = DbContext::new(database_url, subdomain.to_owned())?;
-        Ok(DatadogWorkflow {
+        Ok(Workflow {
             api_key,
             application_key,
-            db,
             api_url,
+            db,
             subdomain,
         })
     }
 
+    /// Refreshes cached data from `DataDog` API
+    ///
+    /// # Errors
+    /// can return when database error occurs or API.
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
-        let datadog_api = DatadogAPI::new(
+        let datadog_api = Api::new(
             self.api_key,
             self.application_key,
             self.api_url,
@@ -47,7 +55,7 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(self.db.optimize()?)
     }
 
-    fn refresh_timeboards(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
+    fn refresh_timeboards(&mut self, datadog_api: &Api) -> Result<(), Error> {
         let mut db = self.db.timeboards();
         db.delete_all()?;
         let results = datadog_api.get_timeboards()?;
@@ -55,7 +63,7 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(())
     }
 
-    fn refresh_screenboards(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
+    fn refresh_screenboards(&mut self, datadog_api: &Api) -> Result<(), Error> {
         let mut db = self.db.screenboards();
         db.delete_all()?;
         let results = datadog_api.get_screenboards()?;
@@ -63,7 +71,7 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(())
     }
 
-    fn refresh_monitors(&mut self, datadog_api: &DatadogAPI) -> Result<(), Error> {
+    fn refresh_monitors(&mut self, datadog_api: &Api) -> Result<(), Error> {
         let mut db = self.db.monitors();
         db.delete_all()?;
         let results = datadog_api.get_monitors()?;
@@ -71,6 +79,10 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(())
     }
 
+    /// Query `DataDog` Time Boards
+    ///
+    /// # Errors
+    /// can return when database error occurs.
     pub fn query_timeboards<'items>(&mut self, title: &str) -> Result<Vec<Item<'items>>, Error> {
         let results = self.db.timeboards().find(title, 10)?;
         let items = results
@@ -86,6 +98,10 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(items)
     }
 
+    /// Query `DataDog` Screen Boards
+    ///
+    /// # Errors
+    /// can return when database error occurs.
     pub fn query_screenboards<'items>(&mut self, title: &str) -> Result<Vec<Item<'items>>, Error> {
         let results = self.db.screenboards().find(title, 10)?;
         let items = results
@@ -101,6 +117,10 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(items)
     }
 
+    /// Query `DataDog` Dashboards
+    ///
+    /// # Errors
+    /// can return when database error occurs.
     pub fn query_dashboards<'items>(&self, title: &str) -> Result<Vec<Item<'items>>, Error> {
         let results = self.db.find_dashboard(title, 10)?;
         let items = results
@@ -116,6 +136,10 @@ impl<'a> DatadogWorkflow<'a> {
         Ok(items)
     }
 
+    /// Query `DataDog` Monitors
+    ///
+    /// # Errors
+    /// can return when database error occurs.
     pub fn query_monitors<'items>(
         &mut self,
         name: &str,

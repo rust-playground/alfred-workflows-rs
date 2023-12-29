@@ -5,26 +5,21 @@ use reqwest::blocking::Client;
 const APPLICATION_KEY: &str = "application_key";
 const API_KEY: &str = "api_key";
 
-pub struct DatadogAPI<'a> {
-    api_key: &'a str,
+pub struct Api<'a> {
+    key: &'a str,
     application_key: &'a str,
-    api_url: &'a str,
+    url: &'a str,
     subdomain: &'a str,
     client: Client,
 }
 
-impl<'a> DatadogAPI<'a> {
+impl<'a> Api<'a> {
     #[inline]
-    pub fn new(
-        api_key: &'a str,
-        application_key: &'a str,
-        api_url: &'a str,
-        subdomain: &'a str,
-    ) -> Self {
+    pub fn new(key: &'a str, application_key: &'a str, url: &'a str, subdomain: &'a str) -> Self {
         Self {
-            api_key,
+            key,
             application_key,
-            api_url,
+            url,
             subdomain,
             client: reqwest::blocking::Client::new(),
         }
@@ -39,11 +34,8 @@ impl<'a> DatadogAPI<'a> {
         }
         let results = self
             .client
-            .get(&format!("{}/v1/dash", self.api_url))
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
+            .get(format!("{}/v1/dash", self.url))
+            .query(&[(APPLICATION_KEY, self.application_key), (API_KEY, self.key)])
             .send()?
             .json::<Dashboards>()?
             .boards;
@@ -60,11 +52,8 @@ impl<'a> DatadogAPI<'a> {
 
         let results = self
             .client
-            .get(&format!("{}/v1/screen", self.api_url))
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
+            .get(format!("{}/v1/screen", self.url))
+            .query(&[(APPLICATION_KEY, self.application_key), (API_KEY, self.key)])
             .send()?
             .json::<ScreenBoards>()?
             .boards;
@@ -75,11 +64,8 @@ impl<'a> DatadogAPI<'a> {
     pub fn get_monitors(&self) -> Result<Vec<InsertMonitor>, Error> {
         let results = self
             .client
-            .get(&format!("{}/v1/monitor", self.api_url))
-            .query(&[
-                (APPLICATION_KEY, self.application_key),
-                (API_KEY, self.api_key),
-            ])
+            .get(format!("{}/v1/monitor", self.url))
+            .query(&[(APPLICATION_KEY, self.application_key), (API_KEY, self.key)])
             .send()?
             .json::<Vec<InsertMonitor>>()?;
         Ok(results)

@@ -20,7 +20,7 @@ pub struct DbContext {
 impl DbContext {
     #[inline]
     pub fn new(database_url: &str, subdomain: String) -> Result<Self, Error> {
-        let conn = Connection::open(&database_url)?;
+        let conn = Connection::open(database_url)?;
         Ok(DbContext { conn, subdomain })
     }
 

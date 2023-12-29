@@ -25,11 +25,11 @@ impl<'a> GitHubAPI<'a> {
 
     #[inline]
     fn fetch_repositories(&self, cursor: Option<String>) -> Result<Results, Error> {
-        let arg = cursor.map_or_else(|| String::from(""), |v| format!(", after:\"{}\"", v));
+        let arg = cursor.map_or_else(String::new, |v| format!(", after:\"{v}\""));
         let query = format!(
             "query {{ \
                 viewer {{ \
-                    repositories(first: 100, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]{}) {{ \
+                    repositories(first: 100, affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]{arg}) {{ \
                         pageInfo {{ \
                             hasNextPage \
                             endCursor \
@@ -42,8 +42,7 @@ impl<'a> GitHubAPI<'a> {
                         }} \
                     }} \
                 }} \
-            }}",
-            arg
+            }}"
         );
 
         // TODO: clean this up with a proper type that will escape automatically when serialized to JSON
@@ -105,7 +104,7 @@ impl<'a> Iterator for OwnedRepositories<'a> {
                     let name = s.next().unwrap_or_default().to_string();
                     let owner = s.next().unwrap_or_default();
                     Repository {
-                        name_with_owner: format!("{}/{}", owner, name),
+                        name_with_owner: format!("{owner}/{name}"),
                         name,
                         url: node.url,
                         pushed_at: node.pushed_at,
