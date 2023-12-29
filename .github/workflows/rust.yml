@@ -2,6 +2,11 @@ name: Lint & Test
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
@@ -9,42 +14,27 @@ jobs:
         platform: [macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install Rust Stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Install Cargo
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: clippy
-
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo index
-        uses: actions/cache@v1
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.platform }}-v2
 
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy Install
+        uses: dtolnay/rust-toolchain@clippy
 
       - name: Lint
-        uses: actions-rs/clippy@master
-        with:
-          args: --all-features --all-targets
+        if: matrix.platform != 'windows-latest'
+        run: cargo clippy --all-features --all-targets --tests -- -Dclippy::all -Dclippy::pedantic
+
+      - name: Lint
+        if: matrix.platform == 'windows-latest'
+        run: cargo clippy --all-features --all-targets --tests
 
       - name: Test
         run: cargo test --all-features

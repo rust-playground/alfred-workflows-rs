@@ -44,7 +44,7 @@ impl<'a> Screenboards<'a> {
                 "https://{}.datadoghq.com/screen/{}",
                 self.db.subdomain, board.id
             );
-            stmt.execute(&[
+            stmt.execute([
                 &board.id as &dyn ToSql,
                 &board.title,
                 &board.description.clone().unwrap_or_default(),
@@ -74,7 +74,7 @@ impl<'a> Screenboards<'a> {
 
         self.db.conn.prepare(
             "SELECT id, title, description, url, modified FROM screenboards WHERE title LIKE ? ORDER BY modified DESC LIMIT ?",
-        )?.query_map(&[&query as &dyn ToSql,&limit], |row| {
+        )?.query_map([&query as &dyn ToSql,&limit], |row| {
             Ok(ScreenBoard{
                 id: row.get(0)?,
                 title:row.get(1)?,

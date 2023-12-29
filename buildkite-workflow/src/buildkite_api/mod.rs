@@ -32,8 +32,7 @@ impl<'a> BuildkiteAPI<'a> {
         PipelinesIter {
             api: self,
             next: Some(format!(
-                "https://api.buildkite.com/v2/organizations/{}/pipelines?per_page=100",
-                organization
+                "https://api.buildkite.com/v2/organizations/{organization}/pipelines?per_page=100"
             )),
         }
     }

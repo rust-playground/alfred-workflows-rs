@@ -55,14 +55,14 @@ impl<'a> Monitors<'a> {
                 "https://{}.datadoghq.com/monitors/{}",
                 self.db.subdomain, monitor.id
             );
-            stmt_monitor.execute(&[
+            stmt_monitor.execute([
                 &monitor.id as &dyn ToSql,
                 &monitor.name,
                 &url,
                 &monitor.modified,
             ])?;
             for tag in &monitor.tags {
-                stmt_tags.execute(&[&monitor.id as &dyn ToSql, &tag])?;
+                stmt_tags.execute([&monitor.id as &dyn ToSql, &tag])?;
             }
         }
 
@@ -89,7 +89,7 @@ impl<'a> Monitors<'a> {
         let mut params: Vec<&dyn ToSql> = vec![&query];
         let mut select = "SELECT m.id, m.name, m.url, m.modified FROM monitors m ".to_owned();
         match tag {
-            Some(ref t) => {
+            Some(t) => {
                 select += "LEFT JOIN monitor_tags t ON t.id = m.id WHERE m.name LIKE ? AND t.name LIKE ? ";
                 tag_query = format!(
                     "%{}%",
