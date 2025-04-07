@@ -1,5 +1,8 @@
 [workspace]
 
+edition = "2024"
+resolver = "3"
+
 members = [
     "datadog-workflow",
     "alfred-workflow",
@@ -9,11 +12,11 @@ members = [
 ]
 
 [workspace.dependencies]
-anyhow = "1.0.80"
-thiserror = "1.0.57"
+anyhow = "1.0.97"
+thiserror = "2.0.12"
 alfred = "4.0.2"
-rusqlite = { version = "0.31.0", features = ["bundled", "chrono"]}
-clap = { version = "4.5.1", features = ["derive"] }
+rusqlite = { version = "0.34.0", features = ["bundled", "chrono"]}
+clap = { version = "4.5.35", features = ["derive"] }
 
 # good read - https://lifthrasiir.github.io/rustlog/why-is-a-rust-executable-large.html
 [profile.release]

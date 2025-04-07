@@ -66,7 +66,7 @@ fn parse_timezone_and_date(ndt: &DateTime<Utc>, tz: &str) -> Result<DateTime<Tz>
         _ => tz,
     };
     Tz::from_str(tz)
-        .map_err(Error::Text)
+        .map_err(|e| Error::Text(e.to_string()))
         .map(|tz| ndt.with_timezone(&tz))
 }
 
