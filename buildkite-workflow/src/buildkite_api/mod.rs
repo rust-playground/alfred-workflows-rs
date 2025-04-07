@@ -91,7 +91,7 @@ pub struct OrganizationsIter<'a> {
     next: Option<String>,
 }
 
-impl<'a> Iterator for OrganizationsIter<'a> {
+impl Iterator for OrganizationsIter<'_> {
     type Item = Result<Vec<Organization>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -115,7 +115,7 @@ pub struct PipelinesIter<'a> {
     next: Option<String>,
 }
 
-impl<'a> Iterator for PipelinesIter<'a> {
+impl Iterator for PipelinesIter<'_> {
     type Item = Result<Vec<Pipeline>>;
 
     fn next(&mut self) -> Option<Self::Item> {

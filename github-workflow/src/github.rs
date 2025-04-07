@@ -73,7 +73,7 @@ pub struct OwnedRepositories<'a> {
     cursor: Option<String>,
 }
 
-impl<'a> Iterator for OwnedRepositories<'a> {
+impl Iterator for OwnedRepositories<'_> {
     type Item = Vec<Repository>;
 
     fn next(&mut self) -> Option<Self::Item> {

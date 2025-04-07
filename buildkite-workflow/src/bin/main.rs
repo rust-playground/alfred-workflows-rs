@@ -52,7 +52,7 @@ fn main() -> Result<(), Error> {
                 write_items(io::stdout(), &[refresh])?;
             }
         }
-    };
+    }
     Ok(())
 }
 
