@@ -2,7 +2,7 @@
 authors = ["Dean Karn <dean.karn@gmail.com>"]
 categories = ["development-tools"]
 description = "GitHub Alfred Workflow to quickly search and open buildkite pipelines."
-edition = "2018"
+edition = "2024"
 keywords = [
     "alfred",
     "workflow",
@@ -24,11 +24,10 @@ thiserror.workspace = true
 anyhow.workspace = true
 rusqlite.workspace = true
 clap.workspace = true
-regex = "1.10.2"
-serde_json = "1.0.108"
-serde = { version = "1.0.192", features = ["derive"] }
-chrono = { version = "0.4.31", features = ["serde"] }
-reqwest = { version = "0.11.23", features = ["rustls-tls","blocking", "json"] }
+regex = "1.10.3"
+serde = { version = "1.0.197", features = ["derive"] }
+chrono = { version = "0.4.34", features = ["serde"] }
+reqwest = { version = "0.12.15", features = ["rustls-tls","blocking", "json"] }
 
 [lib]
 name = "buildkite_workflow_lib"

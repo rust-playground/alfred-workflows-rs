@@ -5,7 +5,7 @@ categories = [
     "development-tools",
 ]
 description = "Date Formats Workflow to quickly handle common data formats and conversions."
-edition = "2018"
+edition = "2024"
 keywords = [
     "alfred",
     "workflow",
@@ -24,6 +24,6 @@ alfred.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 clap.workspace = true
-chrono = "0.4.31"
-chrono-tz = "0.8.5"
+chrono = "0.4.40"
+chrono-tz = "0.10.3"
 anydate = "0.4.0"
