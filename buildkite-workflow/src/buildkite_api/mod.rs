@@ -20,7 +20,7 @@ impl<'a> BuildkiteAPI<'a> {
     }
 
     #[inline]
-    pub fn get_organizations_paginated(&self) -> OrganizationsIter {
+    pub fn get_organizations_paginated(&self) -> OrganizationsIter<'_> {
         OrganizationsIter {
             api: self,
             next: Some("https://api.buildkite.com/v2/organizations?per_page=100".to_owned()),
@@ -28,7 +28,7 @@ impl<'a> BuildkiteAPI<'a> {
     }
 
     #[inline]
-    pub fn get_pipelines_paginated(&self, organization: &str) -> PipelinesIter {
+    pub fn get_pipelines_paginated(&self, organization: &str) -> PipelinesIter<'_> {
         PipelinesIter {
             api: self,
             next: Some(format!(

@@ -15,7 +15,7 @@ members = [
 anyhow = "1.0.97"
 thiserror = "2.0.12"
 alfred = "4.0.2"
-rusqlite = { version = "0.34.0", features = ["bundled", "chrono"]}
+rusqlite = { version = "0.40.2", features = ["bundled", "chrono"]}
 clap = { version = "4.5.35", features = ["derive"] }
 
 # good read - https://lifthrasiir.github.io/rustlog/why-is-a-rust-executable-large.html

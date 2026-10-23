@@ -145,7 +145,7 @@ fn write_variations(dt: &DateTime<Tz>) -> Result<(), Error> {
 }
 
 #[inline]
-fn build_item(date_string: String, subtitle: &str) -> Item {
+fn build_item(date_string: String, subtitle: &str) -> Item<'_> {
     alfred::ItemBuilder::new(date_string.clone())
         .subtitle(subtitle)
         .arg(date_string)

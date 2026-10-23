@@ -1,11 +1,9 @@
 use alfred::{json, Item};
 use anyhow::{anyhow, Error};
-use clap::{
-    app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg, SubCommand,
-};
 use datadog_workflow_lib::workflow::Workflow;
 use std::io::Write;
-use std::{env, io, process::Command};
+use std::{env, io};
+use clap::{command, Command, Arg};
 
 const SUBCOMMAND_SETTINGS: &str = "settings";
 const SUBCOMMAND_REFRESH: &str = "refresh";
@@ -20,71 +18,70 @@ const ARG_TAG: &str = "tag";
 
 #[allow(clippy::too_many_lines)]
 fn main() -> Result<(), Error> {
-    let matches = app_from_crate!("\n")
+    let matches = command!()
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_OPEN)
+            Command::new(SUBCOMMAND_OPEN)
                 .about("opens the provided argument (https://)")
                 .arg(
-                    Arg::with_name(ARG_INPUT)
+                    Arg::new(ARG_INPUT)
                         .long(ARG_INPUT)
                         .help("the input value to open")
                         .index(1),
                 ),
         )
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_SETTINGS)
+            Command::new(SUBCOMMAND_SETTINGS)
                 .about("settings to control")
                 .subcommand(
-                    SubCommand::with_name(SUBCOMMAND_REFRESH).help("refreshes the cached data"),
+                    Command::new(SUBCOMMAND_REFRESH).about("refreshes the cached data"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_TIMEBOARDS)
+            Command::new(SUBCOMMAND_TIMEBOARDS)
                 .about("search for timeboards")
                 .arg(
-                    Arg::with_name(ARG_QUERY)
+                    Arg::new(ARG_QUERY)
                         .long(ARG_QUERY)
                         .help("the title of the timeboard to query")
-                        .multiple(true)
+                        .num_args(1..)
                         .index(1),
                 ),
         )
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_SCREENBOARDS)
+            Command::new(SUBCOMMAND_SCREENBOARDS)
                 .about("search for screenboards")
                 .arg(
-                    Arg::with_name(ARG_QUERY)
+                    Arg::new(ARG_QUERY)
                         .long(ARG_QUERY)
                         .help("the title of the screenboard to query")
-                        .multiple(true)
+                        .num_args(1..)
                         .index(1),
                 ),
         )
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_DASHBOARDS)
+            Command::new(SUBCOMMAND_DASHBOARDS)
                 .about("search for dashboards(timeboards + screenboards)")
                 .arg(
-                    Arg::with_name(ARG_QUERY)
+                    Arg::new(ARG_QUERY)
                         .long(ARG_QUERY)
                         .help("the title of the dashboard to query")
-                        .multiple(true)
+                        .num_args(1..)
                         .index(1),
                 ),
         )
         .subcommand(
-            SubCommand::with_name(SUBCOMMAND_MONITORS)
+            Command::new(SUBCOMMAND_MONITORS)
                 .about("search for monitors")
                 .arg(
-                    Arg::with_name(ARG_TAG)
+                    Arg::new(ARG_TAG)
                         .long(ARG_TAG)
                         .help("the tag to filter monitors by")
-                        .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name(ARG_QUERY)
+                    Arg::new(ARG_QUERY)
                         .long(ARG_QUERY)
                         .help("the name of the monitor to query")
-                        .multiple(true)
+                        .num_args(1..)
                         .index(1),
                 ),
         )
@@ -104,55 +101,64 @@ fn main() -> Result<(), Error> {
     )?;
 
     match matches.subcommand() {
-        (SUBCOMMAND_DASHBOARDS, Some(m)) => {
+        Some((SUBCOMMAND_DASHBOARDS, m)) => {
             let query = m
-                .values_of(ARG_QUERY)
+                .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
+                .map(|v| v.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_dashboards(&query)?;
             write_items(io::stdout(), &items)
         }
-        (SUBCOMMAND_MONITORS, Some(m)) => {
+        Some((SUBCOMMAND_MONITORS, m)) => {
             let query = m
-                .values_of(ARG_QUERY)
+                .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
+                .map(|v| v.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
-            let tag = m.value_of(ARG_TAG);
+
+            let tag = m.get_one::<String>(ARG_TAG).map(|s| s.as_str());
             let items = wf.query_monitors(&query, tag)?;
             write_items(io::stdout(), &items)
         }
-        (SUBCOMMAND_TIMEBOARDS, Some(m)) => {
+        Some((SUBCOMMAND_TIMEBOARDS, m)) => {
             let query = m
-                .values_of(ARG_QUERY)
+                .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
+                .map(|v| v.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_timeboards(&query)?;
             write_items(io::stdout(), &items)
         }
-        (SUBCOMMAND_SCREENBOARDS, Some(m)) => {
+        Some((SUBCOMMAND_SCREENBOARDS, m)) => {
             let query = m
-                .values_of(ARG_QUERY)
+                .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
+                .map(|v| v.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_screenboards(&query)?;
             write_items(io::stdout(), &items)
         }
-        (SUBCOMMAND_SETTINGS, Some(m)) => match m.subcommand() {
-            (SUBCOMMAND_REFRESH, Some(_)) => {
+        Some((SUBCOMMAND_SETTINGS, m)) => match m.subcommand() {
+            Some((SUBCOMMAND_REFRESH, _)) => {
                 wf.refresh_cache()?;
                 println!("Successfully Refreshed Datadog cache");
                 Ok(())
             }
             _ => Err(anyhow!("No suitable SubCommand found")),
         },
-        (SUBCOMMAND_OPEN, Some(m)) => {
-            let input = m.value_of(ARG_INPUT).unwrap_or_default();
+        Some((SUBCOMMAND_OPEN, m)) => {
+            let input = m.get_one::<String>(ARG_INPUT)
+                .map(|s| s.as_str())
+                .unwrap_or_default();
+
             if input.starts_with("https://") {
-                Command::new("open")
+                // 2. Use std::process::Command to avoid conflicting with clap::Command
+                std::process::Command::new("open")
                     .arg(input)
                     .output()
                     .map_err(|e| anyhow!("failed to execute process: {}", e))?;
