@@ -1,4 +1,4 @@
-use alfred::{json, Item};
+use alfred::{Item, json};
 use anyhow::Error;
 use buildkite_workflow_lib::workflow::Workflow;
 use clap::{Parser, Subcommand};

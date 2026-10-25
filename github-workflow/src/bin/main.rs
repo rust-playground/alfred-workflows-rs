@@ -1,5 +1,5 @@
-use alfred::{json, Item};
-use anyhow::{anyhow, Error};
+use alfred::{Item, json};
+use anyhow::{Error, anyhow};
 use clap::{Parser, Subcommand};
 use github_workflow_lib::workflow::Workflow;
 use std::io::Write;
@@ -69,6 +69,5 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, items)
-        .map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
+    json::write_items(writer, items).map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
 }

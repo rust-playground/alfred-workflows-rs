@@ -4,7 +4,7 @@ pub mod models;
 use crate::buildkite_api::models::{Organization, Pipeline};
 use errors::{Error, Result};
 use regex::Regex;
-use reqwest::header::{HeaderValue, CONTENT_TYPE, LINK};
+use reqwest::header::{CONTENT_TYPE, HeaderValue, LINK};
 
 #[derive(Debug)]
 pub struct BuildkiteAPI<'a> {

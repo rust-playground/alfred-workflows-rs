@@ -1,9 +1,9 @@
-use alfred::{json, Item};
-use anyhow::{anyhow, Error};
+use alfred::{Item, json};
+use anyhow::{Error, anyhow};
+use clap::{Arg, Command, command};
 use datadog_workflow_lib::workflow::Workflow;
 use std::io::Write;
 use std::{env, io};
-use clap::{command, Command, Arg};
 
 const SUBCOMMAND_SETTINGS: &str = "settings";
 const SUBCOMMAND_REFRESH: &str = "refresh";
@@ -32,9 +32,7 @@ fn main() -> Result<(), Error> {
         .subcommand(
             Command::new(SUBCOMMAND_SETTINGS)
                 .about("settings to control")
-                .subcommand(
-                    Command::new(SUBCOMMAND_REFRESH).about("refreshes the cached data"),
-                ),
+                .subcommand(Command::new(SUBCOMMAND_REFRESH).about("refreshes the cached data")),
         )
         .subcommand(
             Command::new(SUBCOMMAND_TIMEBOARDS)
@@ -75,7 +73,7 @@ fn main() -> Result<(), Error> {
                 .arg(
                     Arg::new(ARG_TAG)
                         .long(ARG_TAG)
-                        .help("the tag to filter monitors by")
+                        .help("the tag to filter monitors by"),
                 )
                 .arg(
                     Arg::new(ARG_QUERY)
@@ -119,7 +117,9 @@ fn main() -> Result<(), Error> {
                 .collect::<Vec<_>>()
                 .join(" ");
 
-            let tag = m.get_one::<String>(ARG_TAG).map(std::string::String::as_str);
+            let tag = m
+                .get_one::<String>(ARG_TAG)
+                .map(std::string::String::as_str);
             let items = wf.query_monitors(&query, tag)?;
             write_items(io::stdout(), &items)
         }
@@ -152,7 +152,8 @@ fn main() -> Result<(), Error> {
             _ => Err(anyhow!("No suitable SubCommand found")),
         },
         Some((SUBCOMMAND_OPEN, m)) => {
-            let input = m.get_one::<String>(ARG_INPUT)
+            let input = m
+                .get_one::<String>(ARG_INPUT)
                 .map(std::string::String::as_str)
                 .unwrap_or_default();
 
@@ -179,6 +180,5 @@ fn write_items<W>(writer: W, items: &[Item]) -> Result<(), Error>
 where
     W: Write,
 {
-    json::write_items(writer, items)
-        .map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
+    json::write_items(writer, items).map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
 }

@@ -1,6 +1,6 @@
 use crate::buildkite_api::BuildkiteAPI;
-use crate::database::models::Pipeline;
 use crate::database::DbContext;
+use crate::database::models::Pipeline;
 use crate::errors::Error;
 use alfred::Item;
 

@@ -1,6 +1,6 @@
 mod errors;
 
-use alfred::{json, Item};
+use alfred::{Item, json};
 use anyhow::Error as AnyError;
 use chrono::prelude::*;
 use chrono::{Local, Utc};
