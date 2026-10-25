@@ -50,7 +50,7 @@ fn main() -> Result<(), AnyError> {
         let now = alfred::ItemBuilder::new(NOW_DT)
             .subtitle("Common date time formats for the current time in UTC.")
             .autocomplete(format!(" {NOW_DT}"))
-            .arg(format!(" {} --tz {NOW_DT}", &tz))
+            .arg(format!(" {tz} --tz {NOW_DT}"))
             .into_item();
         write_items(io::stdout(), &[now])?;
     }

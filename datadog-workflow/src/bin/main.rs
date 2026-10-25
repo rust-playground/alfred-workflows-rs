@@ -105,7 +105,7 @@ fn main() -> Result<(), Error> {
             let query = m
                 .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
-                .map(|v| v.as_str())
+                .map(std::string::String::as_str)
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_dashboards(&query)?;
@@ -115,11 +115,11 @@ fn main() -> Result<(), Error> {
             let query = m
                 .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
-                .map(|v| v.as_str())
+                .map(std::string::String::as_str)
                 .collect::<Vec<_>>()
                 .join(" ");
 
-            let tag = m.get_one::<String>(ARG_TAG).map(|s| s.as_str());
+            let tag = m.get_one::<String>(ARG_TAG).map(std::string::String::as_str);
             let items = wf.query_monitors(&query, tag)?;
             write_items(io::stdout(), &items)
         }
@@ -127,7 +127,7 @@ fn main() -> Result<(), Error> {
             let query = m
                 .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
-                .map(|v| v.as_str())
+                .map(std::string::String::as_str)
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_timeboards(&query)?;
@@ -137,7 +137,7 @@ fn main() -> Result<(), Error> {
             let query = m
                 .get_many::<String>(ARG_QUERY)
                 .unwrap_or_default()
-                .map(|v| v.as_str())
+                .map(std::string::String::as_str)
                 .collect::<Vec<_>>()
                 .join(" ");
             let items = wf.query_screenboards(&query)?;
@@ -153,7 +153,7 @@ fn main() -> Result<(), Error> {
         },
         Some((SUBCOMMAND_OPEN, m)) => {
             let input = m.get_one::<String>(ARG_INPUT)
-                .map(|s| s.as_str())
+                .map(std::string::String::as_str)
                 .unwrap_or_default();
 
             if input.starts_with("https://") {
@@ -161,7 +161,7 @@ fn main() -> Result<(), Error> {
                 std::process::Command::new("open")
                     .arg(input)
                     .output()
-                    .map_err(|e| anyhow!("failed to execute process: {}", e))?;
+                    .map_err(|e| anyhow!("failed to execute process: {e}"))?;
             }
             Ok(())
         }
@@ -180,5 +180,5 @@ where
     W: Write,
 {
     json::write_items(writer, items)
-        .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
+        .map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
 }

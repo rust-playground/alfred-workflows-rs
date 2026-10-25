@@ -90,5 +90,5 @@ where
     W: Write,
 {
     json::write_items(writer, items)
-        .map_err(|e| anyhow!("failed to write alfred items->json: {}", e))
+        .map_err(|e| anyhow!("failed to write alfred items->json: {e}"))
 }
