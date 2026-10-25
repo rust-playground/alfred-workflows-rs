@@ -1,0 +1,37 @@
+[package]
+authors = ["Dean Karn <dean.karn@gmail.com>"]
+categories = [
+    "cryptography",
+    "encoding",
+    "development-tools",
+]
+description = "Hash Alfred Workflow to quickly hash, encode and decode strings."
+edition = "2024"
+keywords = [
+    "alfred",
+    "workflow",
+    "hash",
+    "base64",
+    "sha256",
+]
+license = "MIT"
+name = "hash-workflow"
+readme = "README.md"
+repository = "https://github.com/rust-playground/alfred-workflows-rs/tree/master/hash-workflow"
+version = "1.0.0"
+
+[dependencies]
+alfred.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+base64 = "0.23.1"
+blake2 = "0.11.0"
+blake3 = "1.8.7"
+clap.workspace = true
+crc32fast = "1.5.3"
+hex = "0.4.3"
+md-5 = "0.11.0"
+percent-encoding = "2.3.2"
+sha1 = "0.11.0"
+sha2 = "0.11.1"
+sha3 = "0.12.0"

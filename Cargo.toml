@@ -9,6 +9,7 @@ members = [
     "github-workflow",
     "date-formats-workflow",
     "buildkite-workflow",
+    "hash-workflow",
 ]
 
 [workspace.dependencies]
