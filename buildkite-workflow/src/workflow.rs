@@ -1,6 +1,6 @@
 use crate::buildkite_api::BuildkiteAPI;
-use crate::database::models::Pipeline;
 use crate::database::DbContext;
+use crate::database::models::Pipeline;
 use crate::errors::Error;
 use alfred::Item;
 
@@ -39,8 +39,8 @@ impl<'a> Workflow<'a> {
                     let pl = pipelines?
                         .into_iter()
                         .map(|p| Pipeline {
-                            url: format!("https://buildkite.com/{}/{}", &org.slug, &p.name),
-                            unique_name: format!("{}/{}", &org.slug, &p.name),
+                            url: format!("https://buildkite.com/{}/{}", org.slug, p.name),
+                            unique_name: format!("{}/{}", org.slug, p.name),
                             name: p.name,
                         })
                         .collect::<Vec<Pipeline>>();

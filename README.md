@@ -10,3 +10,4 @@ Workflows
 | [Buildkite](https://github.com/rust-playground/alfred-workflows-rs/tree/master/buildkite-workflow) | Buildkite Alfred Workflow to search pipelines. |
 | [Github](https://github.com/rust-playground/alfred-workflows-rs/tree/master/github-workflow)   | GitHub Alfred Workflow to quickly search and open repositories.          |
 | [DateTime Formatting](https://github.com/rust-playground/alfred-workflows-rs/tree/master/date-formats-workflow)   | Date Formats Alfred Workflow to parse and manipulate common date formats and timezones.          |
+| [Hash](https://github.com/rust-playground/alfred-workflows-rs/tree/master/hash-workflow)   | Hash Alfred Workflow to hash, encode and decode strings.          |

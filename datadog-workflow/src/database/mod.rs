@@ -27,17 +27,17 @@ impl DbContext {
     // TODO: make interior mutable instead of everything having to be mutable
 
     #[inline]
-    pub fn monitors(&mut self) -> Monitors {
+    pub fn monitors(&mut self) -> Monitors<'_> {
         Monitors::new(self)
     }
 
     #[inline]
-    pub fn timeboards(&mut self) -> Timeboards {
+    pub fn timeboards(&mut self) -> Timeboards<'_> {
         Timeboards::new(self)
     }
 
     #[inline]
-    pub fn screenboards(&mut self) -> Screenboards {
+    pub fn screenboards(&mut self) -> Screenboards<'_> {
         Screenboards::new(self)
     }
 

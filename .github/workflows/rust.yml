@@ -1,7 +1,12 @@
 name: Lint & Test
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, reopened, synchronize]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -9,32 +14,24 @@ concurrency:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        platform: [macos-latest]
-    runs-on: ${{ matrix.platform }}
+    runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.platform }}-v2
 
-      - name: Clippy Install
-        uses: dtolnay/rust-toolchain@clippy
+      - name: Format
+        run: cargo fmt --all -- --check
 
       - name: Lint
-        if: matrix.platform != 'windows-latest'
-        run: cargo clippy --all-features --all-targets --tests -- -Dclippy::all -Dclippy::pedantic
-
-      - name: Lint
-        if: matrix.platform == 'windows-latest'
-        run: cargo clippy --all-features --all-targets --tests
+        run: cargo clippy --all-features --all-targets -- -Dclippy::all -Dclippy::pedantic
 
       - name: Test
         run: cargo test --all-features

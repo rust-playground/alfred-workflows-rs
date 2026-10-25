@@ -1,6 +1,6 @@
+use crate::database::DbContext;
 use crate::database::errors::Error;
 use crate::database::models::{InsertMonitor, Monitor};
-use crate::database::DbContext;
 use rusqlite::ToSql;
 
 pub struct Monitors<'a> {

@@ -1,38 +1,44 @@
 use crate::database::DbContext;
 use crate::errors::Error;
-use crate::github::GitHubAPI;
+use crate::github::{self, Account, GitHubAPI};
 use alfred::Item;
 
-pub struct Workflow<'a> {
-    api_key: &'a str,
+pub struct Workflow {
+    accounts: Vec<Account>,
     db: DbContext,
 }
 
-impl<'a> Workflow<'a> {
+impl Workflow {
+    /// `api_keys` is a comma-separated list of `<token>` or `<token>@<ghes-host>` entries.
+    ///
     /// # Errors
     ///
-    /// Will return `Err` if `database` could not be connected to.
+    /// Will return `Err` if `api_keys` is malformed or `database` could not be connected to.
     ///
     #[inline]
-    pub fn new(api_key: &'a str, database_url: &str) -> Result<Self, Error> {
+    pub fn new(api_keys: &str, database_url: &str) -> Result<Self, Error> {
+        let accounts = github::parse_accounts(api_keys)?;
         let db = DbContext::new(database_url)?;
-        Ok(Workflow { api_key, db })
+        Ok(Workflow { accounts, db })
     }
 
+    /// Fetches repositories for every account before touching the cache, so a failing
+    /// account leaves the existing cache intact.
+    ///
     /// # Errors
     ///
     /// Will return `Err` if Contacting GitHub returns an error.
     ///
     #[inline]
     pub fn refresh_cache(&mut self) -> Result<(), Error> {
-        self.db.run_migrations()?;
-        let api = GitHubAPI::new(self.api_key);
-
-        self.db.delete_repositories()?;
-
-        for v in api.accessible_repositories() {
-            self.db.insert_repositories(&v)?;
+        let mut repositories = Vec::new();
+        for account in &self.accounts {
+            let api = GitHubAPI::new(account);
+            for page in api.accessible_repositories() {
+                repositories.extend(page?);
+            }
         }
+        self.db.replace_repositories(&repositories)?;
         // and DB cleanup work
         self.db.optimize()?;
         Ok(())

@@ -1,6 +1,6 @@
+use crate::database::DbContext;
 use crate::database::errors::Error;
 use crate::database::models::{InsertScreenBoard, ScreenBoard};
-use crate::database::DbContext;
 use rusqlite::ToSql;
 
 pub struct Screenboards<'a> {
